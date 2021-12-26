@@ -1,0 +1,33 @@
+version: '3.7'
+services:
+    postgres:
+        image: postgres
+        restart: always
+        environment: 
+          - POSTGRES_USER=postgres
+          - POSTGRES_PASSWORD=postgres
+        logging:
+          options:
+            max-size: 10m
+            max-file: "3"
+        ports:
+          - '5432:5432'
+        volumes:
+          - ./build/postgres-data:/var/lib/postgresql/data
+          - ./build/postgres:/docker-entrypoint-initdb.d
+
+    rabbitmq:
+      image: rabbitmq:3-management-alpine
+      container_name: 'rabbitmq'
+      ports:
+        - 5672:5672
+        - 15672:15672
+      volumes:
+          - ./build/rabbitmq/data/:/var/lib/rabbitmq/
+          - ./build/rabbitmq/log/:/var/log/rabbitmq
+      networks:
+        - rabbitmq_go_net
+
+networks:
+  rabbitmq_go_net:
+    driver: bridge
