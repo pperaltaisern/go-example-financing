@@ -2,11 +2,11 @@ package financing
 
 import (
 	"errors"
-	"ledger/internal/es"
+	"ledger/internal/esrc"
 )
 
 type Invoice struct {
-	es.Aggregate
+	esrc.Aggregate
 
 	id          ID
 	issuerID    ID
@@ -30,7 +30,7 @@ func NewInvoice(issuerID ID, askingPrice Money) *Invoice {
 		askingPrice: askingPrice,
 		status:      invoiceStatusAvailable,
 	}
-	inv.Aggregate = es.NewAggregate(inv.onEvent)
+	inv.Aggregate = esrc.NewAggregate(inv.onEvent)
 	return inv
 }
 
@@ -87,16 +87,16 @@ func (inv *Invoice) ApproveFinancing() {
 	inv.Raise(e)
 }
 
-func NewInvoiceFromEvents(events []es.Event) *Invoice {
+func NewInvoiceFromEvents(events []esrc.Event) *Invoice {
 	inv := &Invoice{}
-	inv.Aggregate = es.NewAggregate(inv.onEvent)
+	inv.Aggregate = esrc.NewAggregate(inv.onEvent)
 
 	inv.Replay(events)
 
 	return inv
 }
 
-func (inv *Invoice) onEvent(event es.Event) {
+func (inv *Invoice) onEvent(event esrc.Event) {
 	switch e := event.(type) {
 	case InvoiceFinancedEvent:
 		inv.finance(e.Bid)

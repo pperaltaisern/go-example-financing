@@ -2,11 +2,11 @@ package financing
 
 import (
 	"errors"
-	"ledger/internal/es"
+	"ledger/internal/esrc"
 )
 
 type Investor struct {
-	es.Aggregate
+	esrc.Aggregate
 
 	id       ID
 	balance  Money
@@ -15,7 +15,7 @@ type Investor struct {
 
 func NewInvestor(id ID) *Investor {
 	inv := &Investor{}
-	inv.Aggregate = es.NewAggregate(inv.onEvent)
+	inv.Aggregate = esrc.NewAggregate(inv.onEvent)
 
 	e := NewInvestorCreatedEvent(id)
 	inv.Raise(e)
@@ -77,16 +77,16 @@ func (inv *Investor) releaseFunds(amount Money) {
 	inv.reserved -= amount
 }
 
-func NewInvestorFromEvents(events []es.Event) *Investor {
+func NewInvestorFromEvents(events []esrc.Event) *Investor {
 	inv := &Investor{}
-	inv.Aggregate = es.NewAggregate(inv.onEvent)
+	inv.Aggregate = esrc.NewAggregate(inv.onEvent)
 
 	inv.Replay(events)
 
 	return inv
 }
 
-func (inv *Investor) onEvent(event es.Event) {
+func (inv *Investor) onEvent(event esrc.Event) {
 	switch e := event.(type) {
 	case InvestorCreatedEvent:
 		inv.id = e.InvestorID

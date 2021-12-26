@@ -1,15 +1,15 @@
 package financing
 
-import "ledger/internal/es"
+import "ledger/internal/esrc"
 
 type Issuer struct {
-	es.Aggregate
+	esrc.Aggregate
 	id ID
 }
 
 func NewIssuer(id ID) *Issuer {
 	inv := &Issuer{}
-	inv.Aggregate = es.NewAggregate(inv.onEvent)
+	inv.Aggregate = esrc.NewAggregate(inv.onEvent)
 
 	e := NewIssuerCreatedEvent(id)
 	inv.Raise(e)
@@ -20,16 +20,16 @@ func (iss *Issuer) ID() ID {
 	return iss.id
 }
 
-func NewIssuerFromEvents(events []es.Event) *Issuer {
+func NewIssuerFromEvents(events []esrc.Event) *Issuer {
 	inv := &Issuer{}
-	inv.Aggregate = es.NewAggregate(inv.onEvent)
+	inv.Aggregate = esrc.NewAggregate(inv.onEvent)
 
 	inv.Replay(events)
 
 	return inv
 }
 
-func (iss *Issuer) onEvent(event es.Event) {
+func (iss *Issuer) onEvent(event esrc.Event) {
 	switch e := event.(type) {
 	case IssuerCreatedEvent:
 		iss.id = e.IssuerID

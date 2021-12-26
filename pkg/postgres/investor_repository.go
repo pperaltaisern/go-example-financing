@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
-	"ledger/internal/es"
+	"ledger/internal/esrc"
 	"ledger/pkg/financing"
 )
 
@@ -50,7 +50,7 @@ func (r *InvestorRepository) ByID(ctx context.Context, id financing.ID) (*financ
 	}
 	defer rows.Close()
 
-	var events []es.Event
+	var events []esrc.Event
 	for rows.Next() {
 		var name string
 		var data []byte

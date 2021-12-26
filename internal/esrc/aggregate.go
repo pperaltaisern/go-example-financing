@@ -1,4 +1,4 @@
-package es
+package esrc
 
 type Aggregate struct {
 	changes []Event
