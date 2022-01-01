@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"fmt"
 	"ledger/pkg/financing"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
@@ -28,6 +29,7 @@ func (h *CreateInvestorHandler) NewCommand() interface{} {
 }
 
 func (h *CreateInvestorHandler) Handle(ctx context.Context, c interface{}) error {
+	fmt.Println("HANDLER")
 	cmd := c.(*CreateInvestor)
 
 	investor := financing.NewInvestor(cmd.ID)
@@ -35,6 +37,7 @@ func (h *CreateInvestorHandler) Handle(ctx context.Context, c interface{}) error
 
 	err := h.investors.Add(ctx, investor)
 	if err != nil {
+		fmt.Println("HANDLER ERR: ", err)
 		return err
 	}
 

@@ -5,7 +5,6 @@ import (
 )
 
 type IssuerRegistered struct {
-	ID     financing.ID
-	Name   string
-	Amount financing.Money
+	ID   financing.ID
+	Name string
 }

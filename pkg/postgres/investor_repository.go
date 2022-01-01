@@ -18,7 +18,7 @@ const streamTypeInvestor = "investor"
 
 // event streams
 const insertEventStream = "INSERT INTO event_streams(id, type, version) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING"
-const existsStream = "SELECT EXISTS(SELECT 1 FROM event_streams WHERE id=$1 AND type=$2)"
+const existsStream = "SELECT EXISTS(SELECT 1 FROM event_streams WHERE id=$1)"
 const updateStream = "UPDATE event_streams SET version = version + 1 WHERE id = $1 AND VERSION = $2"
 
 // events

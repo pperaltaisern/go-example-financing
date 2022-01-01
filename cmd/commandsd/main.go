@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	espostgres "ledger/internal/esrc/postgres"
+	"ledger/internal/esrc/relay"
 	"ledger/internal/watermillzap"
 	"ledger/pkg/command"
 	"ledger/pkg/eventhandler"
@@ -27,12 +29,17 @@ func main() {
 		panic(err)
 	}
 
-	repos, err := PostgresRepositories(config.Postgres)
+	pool, err := pgxpool.Connect(context.Background(), config.Postgres.ConnectionString)
+	if err != nil {
+		log.Fatal("err connecting to Postgres: %v", zap.Error(err))
+	}
+
+	repos, err := PostgresRepositories(pool)
 	if err != nil {
 		log.Fatal("err building Postgres repositories: %v", zap.Error(err))
 	}
 
-	_, messageRouter, err := CqrsFacade(config.AMQP, repos, log)
+	cqrsFacade, messageRouter, err := CqrsFacade(config.AMQP, repos, log)
 	if err != nil {
 		log.Fatal("err building CQRS facade: %v", zap.Error(err))
 	}
@@ -40,6 +47,10 @@ func main() {
 	m := Main{
 		log:           log,
 		messageRouter: messageRouter,
+		relayer: relay.NewRelayer(
+			espostgres.NewEventStoreOutbox(pool),
+			Publisher{cqrsFacade.EventBus()},
+		),
 	}
 
 	errC := make(chan error, 2)
@@ -53,9 +64,53 @@ func main() {
 		errC <- m.Run()
 	}()
 
+	inv := intevent.InvestorRegistered{
+		ID:      financing.NewID(),
+		Name:    "INVESTOR_1",
+		Balance: 100,
+	}
+	err = cqrsFacade.EventBus().Publish(context.Background(), inv)
+	if err != nil {
+		log.Error("err creating investor", zap.Error(err))
+	}
+
+	if false {
+		iss := intevent.IssuerRegistered{
+			ID:   financing.NewID(),
+			Name: "ISSUER_1",
+		}
+		err = cqrsFacade.EventBus().Publish(context.Background(), iss)
+		if err != nil {
+			log.Error("err creating issuer", zap.Error(err))
+		}
+
+		err = cqrsFacade.EventBus().Publish(context.Background(), iss)
+		if err != nil {
+			log.Error("err creating issuer", zap.Error(err))
+		}
+
+		cmd := command.SellInvoice{
+			IssuerID:    financing.NewID(),
+			AskingPrice: 20,
+		}
+		err = cqrsFacade.CommandBus().Send(context.Background(), cmd)
+		if err != nil {
+			log.Error("err SellInvoice", zap.Error(err))
+		}
+	}
+
 	log.Info("terminated", zap.Error(<-errC))
 	m.Close()
 	log.Info("closed gracefully")
+}
+
+type Publisher struct {
+	bus *cqrs.EventBus
+}
+
+func (p Publisher) Publish(ctx context.Context, e relay.Event) error {
+	fmt.Println("** Event relayed: ", e)
+	return p.bus.Publish(ctx, e)
 }
 
 func ParseFlags() (c Config, log *zap.Logger, err error) {
@@ -82,12 +137,7 @@ type Repositories struct {
 	Invoices  financing.InvoiceRepository
 }
 
-func PostgresRepositories(config PostgresConfig) (Repositories, error) {
-	pool, err := pgxpool.Connect(context.Background(), config.ConnectionString)
-	if err != nil {
-		return Repositories{}, err
-	}
-
+func PostgresRepositories(pool *pgxpool.Pool) (Repositories, error) {
 	repos := Repositories{
 		Issuers:   postgres.NewIssuerRepository(pool),
 		Investors: postgres.NewInvestorRepository(pool),
@@ -112,7 +162,7 @@ func CqrsFacade(config AMQPConfig, repos Repositories, log *zap.Logger) (*cqrs.F
 		return nil, nil, err
 	}
 
-	eventsPublisher, err := amqp.NewPublisher(commandsAMQPConfig, wmlog)
+	eventsPublisher, err := amqp.NewPublisher(amqp.NewDurablePubSubConfig(config.Address, nil), wmlog)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -184,13 +234,16 @@ func CqrsFacade(config AMQPConfig, repos Repositories, log *zap.Logger) (*cqrs.F
 type Main struct {
 	log           *zap.Logger
 	messageRouter *message.Router
+	relayer       *relay.Relayer
 }
 
 func (m *Main) Run() error {
+	go m.relayer.Run()
 	return m.messageRouter.Run(context.Background())
 }
 
 func (m *Main) Close() {
+	m.relayer.Stop()
 	err := m.messageRouter.Close()
 	if err != nil {
 		m.log.Error("err clossing message router %v: err")

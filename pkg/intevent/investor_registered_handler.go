@@ -2,6 +2,7 @@ package intevent
 
 import (
 	"context"
+	"fmt"
 	"ledger/pkg/command"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
@@ -28,6 +29,7 @@ func (h *InvestorRegisteredHandler) NewEvent() interface{} {
 }
 
 func (h *InvestorRegisteredHandler) Handle(ctx context.Context, e interface{}) error {
+	fmt.Println("**************************************")
 	event := e.(*InvestorRegistered)
 
 	cmd := command.CreateInvestor{
