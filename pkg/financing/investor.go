@@ -56,7 +56,7 @@ func (inv *Investor) ReleaseFunds(amount Money) error {
 }
 
 func (inv *Investor) hasEnoughBalance(amount Money) bool {
-	return inv.balance < amount
+	return inv.balance >= amount
 }
 
 func (inv *Investor) hasEnoughBalanceReserved(amount Money) bool {

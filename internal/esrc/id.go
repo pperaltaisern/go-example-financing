@@ -1,4 +1,4 @@
-package financing
+package esrc
 
 import (
 	"encoding/json"
@@ -34,5 +34,3 @@ func (id *ID) UnmarshalJSON(data []byte) error {
 	*id = ID(v)
 	return nil
 }
-
-type Money float64

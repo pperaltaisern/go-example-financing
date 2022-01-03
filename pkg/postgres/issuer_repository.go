@@ -31,7 +31,7 @@ func (r *IssuerRepository) Contains(ctx context.Context, id financing.ID) (bool,
 	}
 	defer conn.Release()
 
-	rows, err := conn.Query(ctx, existsStream, id, streamTypeIssuer)
+	rows, err := conn.Query(ctx, existsStream, id)
 	if err != nil {
 		return false, err
 	}
@@ -71,7 +71,7 @@ func (r *IssuerRepository) Update(ctx context.Context, inv *financing.Issuer) er
 	}
 	defer tx.Rollback(ctx)
 
-	for i, e := range events[v:] {
+	for i, e := range events {
 		_, err := tx.Exec(ctx, updateStream, inv.ID(), v)
 		if err != nil {
 			return err
@@ -81,7 +81,7 @@ func (r *IssuerRepository) Update(ctx context.Context, inv *financing.Issuer) er
 		if err != nil {
 			return err
 		}
-		_, err = tx.Exec(ctx, insertEvents, inv.ID(), e.Name(), i+1, b)
+		_, err = tx.Exec(ctx, insertEvents, inv.ID(), e.Name(), v+i+1, b)
 		if err != nil {
 			return err
 		}

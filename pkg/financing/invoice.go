@@ -24,8 +24,9 @@ const (
 	invoiceStatusReversed
 )
 
-func NewInvoice(issuerID ID, askingPrice Money) *Invoice {
+func NewInvoice(id, issuerID ID, askingPrice Money) *Invoice {
 	inv := &Invoice{
+		id:          id,
 		issuerID:    issuerID,
 		askingPrice: askingPrice,
 		status:      invoiceStatusAvailable,

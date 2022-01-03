@@ -17,12 +17,12 @@ const eventStreamInitialVersion = 0
 const streamTypeInvestor = "investor"
 
 // event streams
-const insertEventStream = "INSERT INTO event_streams(id, type, version) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING"
+const insertEventStream = "INSERT INTO event_streams(id, type, version) VALUES ($1, $2, $3)"
 const existsStream = "SELECT EXISTS(SELECT 1 FROM event_streams WHERE id=$1)"
 const updateStream = "UPDATE event_streams SET version = version + 1 WHERE id = $1 AND VERSION = $2"
 
 // events
-const insertEvents = "INSERT INTO events(event_source_id, name, version, data) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING"
+const insertEvents = "INSERT INTO events(event_source_id, name, version, data) VALUES ($1, $2, $3, $4)"
 const queryEvents = "SELECT name, data FROM events WHERE event_source_id = $1 ORDER BY version ASC"
 
 type InvestorRepository struct {
@@ -101,6 +101,8 @@ func (r *InvestorRepository) ByID(ctx context.Context, id financing.ID) (*financ
 
 func (r *InvestorRepository) Update(ctx context.Context, inv *financing.Investor) error {
 	v := inv.Version()
+
+	fmt.Println("UPDATE investor: ", v, inv.ID().String())
 	events := inv.Events()
 	if v == len(events) {
 		return errors.New("no new events")
@@ -118,9 +120,11 @@ func (r *InvestorRepository) Update(ctx context.Context, inv *financing.Investor
 	}
 	defer tx.Rollback(ctx)
 
-	for i, e := range events[v:] {
+	for i, e := range events {
+		fmt.Println("new event: ", i, e)
 		_, err := tx.Exec(ctx, updateStream, inv.ID(), v)
 		if err != nil {
+			fmt.Println("new event: err", err)
 			return err
 		}
 
@@ -128,10 +132,14 @@ func (r *InvestorRepository) Update(ctx context.Context, inv *financing.Investor
 		if err != nil {
 			return err
 		}
-		_, err = tx.Exec(ctx, insertEvents, inv.ID(), e.Name(), i+1, b)
-		if err != nil {
-			return err
-		}
+
+		fmt.Println("marshal: err", string(b))
+
+		// _, err = tx.Exec(ctx, insertEvents, inv.ID(), e.Name(), v+i+1, b)
+		// if err != nil {
+		// 	fmt.Println("insertEvents: err", err)
+		// 	return err
+		// }
 	}
 
 	return nil

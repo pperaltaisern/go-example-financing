@@ -1,6 +1,7 @@
 package esrc
 
 type Aggregate struct {
+	id      ID
 	changes []Event
 	version int
 
@@ -11,6 +12,10 @@ func NewAggregate(onEvent func(Event)) Aggregate {
 	return Aggregate{
 		onEvent: onEvent,
 	}
+}
+
+func (a Aggregate) ID() ID {
+	return a.id
 }
 
 func (a Aggregate) Events() []Event {

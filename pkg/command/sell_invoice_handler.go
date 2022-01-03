@@ -37,7 +37,7 @@ func (h *SellInvoiceHandler) Handle(ctx context.Context, c interface{}) error {
 		return fmt.Errorf("issuer %v not found", cmd.IssuerID)
 	}
 
-	invoice := financing.NewInvoice(cmd.IssuerID, cmd.AskingPrice)
+	invoice := financing.NewInvoice(cmd.InvoiceID, cmd.IssuerID, cmd.AskingPrice)
 
 	err = h.invoices.Add(ctx, invoice)
 	if err != nil {

@@ -64,34 +64,40 @@ func main() {
 		errC <- m.Run()
 	}()
 
-	inv := intevent.InvestorRegistered{
-		ID:      financing.NewID(),
-		Name:    "INVESTOR_1",
-		Balance: 100,
-	}
-	err = cqrsFacade.EventBus().Publish(context.Background(), inv)
-	if err != nil {
-		log.Error("err creating investor", zap.Error(err))
-	}
+	if true {
+		// inv := intevent.InvestorRegistered{
+		// 	ID:      financing.NewID(),
+		// 	Name:    "INVESTOR_1",
+		// 	Balance: 100,
+		// }
+		// err = cqrsFacade.EventBus().Publish(context.Background(), inv)
+		// if err != nil {
+		// 	log.Error("err creating investor", zap.Error(err))
+		// }
 
-	if false {
-		iss := intevent.IssuerRegistered{
-			ID:   financing.NewID(),
-			Name: "ISSUER_1",
-		}
-		err = cqrsFacade.EventBus().Publish(context.Background(), iss)
-		if err != nil {
-			log.Error("err creating issuer", zap.Error(err))
-		}
+		// iss := intevent.IssuerRegistered{
+		// 	ID:   financing.NewID(),
+		// 	Name: "ISSUER_1",
+		// }
+		// err = cqrsFacade.EventBus().Publish(context.Background(), iss)
+		// if err != nil {
+		// 	log.Error("err creating issuer", zap.Error(err))
+		// }
 
-		err = cqrsFacade.EventBus().Publish(context.Background(), iss)
-		if err != nil {
-			log.Error("err creating issuer", zap.Error(err))
-		}
+		// cmd := command.SellInvoice{
+		// 	InvoiceID:   financing.NewID(),
+		// 	IssuerID:    financing.NewIDFrom("dfb61025-037e-42dd-bcc0-f7904ae3000e"),
+		// 	AskingPrice: 20,
+		// }
+		// err = cqrsFacade.CommandBus().Send(context.Background(), cmd)
+		// if err != nil {
+		// 	log.Error("err SellInvoice", zap.Error(err))
+		// }
 
-		cmd := command.SellInvoice{
-			IssuerID:    financing.NewID(),
-			AskingPrice: 20,
+		cmd := command.BidOnInvoice{
+			InvoiceID:  financing.NewIDFrom("df7531f9-afa4-44f8-b1e0-70a0c9b6991d"),
+			InvestorID: financing.NewIDFrom("5f5ef4e2-947c-4ccc-805f-dddefc664b7b"),
+			BidAmount:  35,
 		}
 		err = cqrsFacade.CommandBus().Send(context.Background(), cmd)
 		if err != nil {
