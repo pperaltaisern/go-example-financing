@@ -14,4 +14,4 @@ func NewBidOnInvoiceRejectedEvent(invoiceID ID, bid Bid) BidOnInvoiceRejectedEve
 
 func (e BidOnInvoiceRejectedEvent) IsEvent() {}
 
-func (e BidOnInvoiceRejectedEvent) Name() string { return "BidOnInvoiceRejectedEvent" }
+func (e BidOnInvoiceRejectedEvent) EventName() string { return "BidOnInvoiceRejectedEvent" }

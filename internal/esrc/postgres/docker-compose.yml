@@ -1,0 +1,15 @@
+version: '3.7'
+services:
+    esrc-postgres:
+        image: postgres
+        environment: 
+          - POSTGRES_USER=postgres
+          - POSTGRES_PASSWORD=postgres
+        logging:
+          options:
+            max-size: 10m
+            max-file: "3"
+        ports:
+          - '5432:5432'
+        volumes:
+          - ./sql:/docker-entrypoint-initdb.d

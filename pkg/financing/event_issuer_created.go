@@ -12,4 +12,4 @@ func NewIssuerCreatedEvent(issuerID ID) IssuerCreatedEvent {
 
 func (e IssuerCreatedEvent) IsEvent() {}
 
-func (e IssuerCreatedEvent) Name() string { return "IssuerCreatedEvent" }
+func (e IssuerCreatedEvent) EventName() string { return "IssuerCreatedEvent" }

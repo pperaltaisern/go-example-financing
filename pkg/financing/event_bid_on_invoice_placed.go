@@ -14,4 +14,4 @@ func NewBidOnInvoicePlacedEvent(invoiceID ID, bid Bid) BidOnInvoicePlacedEvent {
 
 func (e BidOnInvoicePlacedEvent) IsEvent() {}
 
-func (e BidOnInvoicePlacedEvent) Name() string { return "BidOnInvoicePlacedEvent" }
+func (e BidOnInvoicePlacedEvent) EventName() string { return "BidOnInvoicePlacedEvent" }

@@ -14,4 +14,4 @@ func NewInvestorFundsAddedEvent(investorID ID, amount Money) InvestorFundsAddedE
 
 func (e InvestorFundsAddedEvent) IsEvent() {}
 
-func (e InvestorFundsAddedEvent) Name() string { return "InvestorFundsAddedEvent" }
+func (e InvestorFundsAddedEvent) EventName() string { return "InvestorFundsAddedEvent" }

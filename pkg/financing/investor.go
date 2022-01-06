@@ -6,7 +6,7 @@ import (
 )
 
 type Investor struct {
-	esrc.Aggregate
+	aggregate esrc.Aggregate
 
 	id       ID
 	balance  Money
@@ -15,20 +15,22 @@ type Investor struct {
 
 func NewInvestor(id ID) *Investor {
 	inv := &Investor{}
-	inv.Aggregate = esrc.NewAggregate(inv.onEvent)
+	inv.aggregate = esrc.NewAggregate(inv.onEvent)
 
 	e := NewInvestorCreatedEvent(id)
-	inv.Raise(e)
+	inv.aggregate.Raise(e)
 	return inv
 }
 
-func (inv *Investor) ID() ID {
-	return inv.id
+func newInvestorFromEvents(id ID, events []esrc.Event) *Investor {
+	inv := &Investor{}
+	inv.aggregate = esrc.NewAggregateFromEvents(events, inv.onEvent)
+	return inv
 }
 
 func (inv *Investor) AddFunds(amount Money) error {
 	e := NewInvestorFundsAddedEvent(inv.id, amount)
-	inv.Raise(e)
+	inv.aggregate.Raise(e)
 	return nil
 }
 
@@ -40,7 +42,7 @@ func (inv *Investor) BidOnInvoice(invoiceID ID, amount Money) error {
 	}
 	bid := NewBid(inv.id, amount)
 	e := NewBidOnInvoicePlacedEvent(invoiceID, bid)
-	inv.Raise(e)
+	inv.aggregate.Raise(e)
 	return nil
 }
 
@@ -51,7 +53,7 @@ func (inv *Investor) ReleaseFunds(amount Money) error {
 		return ErrNotEnoughtBalanceReservedToRelease
 	}
 	e := NewInvestorFundsReleasedEvent(inv.id, amount)
-	inv.Raise(e)
+	inv.aggregate.Raise(e)
 	return nil
 }
 
@@ -75,15 +77,6 @@ func (inv *Investor) reserveFunds(amount Money) {
 func (inv *Investor) releaseFunds(amount Money) {
 	inv.balance += amount
 	inv.reserved -= amount
-}
-
-func NewInvestorFromEvents(events []esrc.Event) *Investor {
-	inv := &Investor{}
-	inv.Aggregate = esrc.NewAggregate(inv.onEvent)
-
-	inv.Replay(events)
-
-	return inv
 }
 
 func (inv *Investor) onEvent(event esrc.Event) {

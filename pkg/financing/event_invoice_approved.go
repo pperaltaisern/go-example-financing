@@ -14,4 +14,4 @@ func NewInvoiceApprovedEvent(invoiceID ID, bid Bid) InvoiceApprovedEvent {
 
 func (e InvoiceApprovedEvent) IsEvent() {}
 
-func (e InvoiceApprovedEvent) Name() string { return "InvoiceApprovedEvent" }
+func (e InvoiceApprovedEvent) EventName() string { return "InvoiceApprovedEvent" }

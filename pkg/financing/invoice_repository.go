@@ -1,6 +1,8 @@
 package financing
 
-import "context"
+import (
+	"context"
+)
 
 type InvoiceRepository interface {
 	ByID(context.Context, ID) (*Invoice, error)

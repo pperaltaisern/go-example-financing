@@ -10,6 +10,4 @@ func NewInvestorCreatedEvent(investorID ID) InvestorCreatedEvent {
 	}
 }
 
-func (e InvestorCreatedEvent) IsEvent() {}
-
-func (e InvestorCreatedEvent) Name() string { return "InvestorCreatedEvent" }
+func (e InvestorCreatedEvent) EventName() string { return "InvestorCreatedEvent" }

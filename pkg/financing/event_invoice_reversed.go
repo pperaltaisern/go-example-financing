@@ -14,4 +14,4 @@ func NewInvoiceReversedEvent(invoiceID ID, bid Bid) InvoiceReversedEvent {
 
 func (e InvoiceReversedEvent) IsEvent() {}
 
-func (e InvoiceReversedEvent) Name() string { return "InvoiceReversedEvent" }
+func (e InvoiceReversedEvent) EventName() string { return "InvoiceReversedEvent" }

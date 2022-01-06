@@ -16,4 +16,4 @@ func NewInvoiceFinancedEvent(invoiceID ID, askingPrice Money, bid Bid) InvoiceFi
 
 func (e InvoiceFinancedEvent) IsEvent() {}
 
-func (e InvoiceFinancedEvent) Name() string { return "InvoiceFinancedEvent" }
+func (e InvoiceFinancedEvent) EventName() string { return "InvoiceFinancedEvent" }
