@@ -22,7 +22,7 @@ func NewInvestor(id ID) *Investor {
 	return inv
 }
 
-func newInvestorFromEvents(id ID, events []esrc.Event) *Investor {
+func newInvestorFromEvents(events []esrc.Event) *Investor {
 	inv := &Investor{}
 	inv.aggregate = esrc.NewAggregateFromEvents(events, inv.onEvent)
 	return inv
@@ -81,13 +81,13 @@ func (inv *Investor) releaseFunds(amount Money) {
 
 func (inv *Investor) onEvent(event esrc.Event) {
 	switch e := event.(type) {
-	case InvestorCreatedEvent:
+	case *InvestorCreatedEvent:
 		inv.id = e.InvestorID
-	case InvestorFundsAddedEvent:
+	case *InvestorFundsAddedEvent:
 		inv.addFunds(e.Amount)
-	case BidOnInvoicePlacedEvent:
+	case *BidOnInvoicePlacedEvent:
 		inv.reserveFunds(e.Bid.Amount)
-	case InvestorFundsReleasedEvent:
+	case *InvestorFundsReleasedEvent:
 		inv.releaseFunds(e.Amount)
 	}
 }

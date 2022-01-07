@@ -6,7 +6,7 @@ import (
 )
 
 type Invoice struct {
-	esrc.Aggregate
+	aggregate esrc.Aggregate
 
 	id          ID
 	issuerID    ID
@@ -25,18 +25,18 @@ const (
 )
 
 func NewInvoice(id, issuerID ID, askingPrice Money) *Invoice {
-	inv := &Invoice{
-		id:          id,
-		issuerID:    issuerID,
-		askingPrice: askingPrice,
-		status:      invoiceStatusAvailable,
-	}
-	inv.Aggregate = esrc.NewAggregate(inv.onEvent)
+	inv := &Invoice{}
+	inv.aggregate = esrc.NewAggregate(inv.onEvent)
+
+	e := NewInvoiceCreatedEvent(id, issuerID, askingPrice)
+	inv.aggregate.Raise(e)
 	return inv
 }
 
-func (inv *Invoice) ID() ID {
-	return inv.id
+func newInvoiceFromEvents(events []esrc.Event) *Invoice {
+	inv := &Invoice{}
+	inv.aggregate = esrc.NewAggregateFromEvents(events, inv.onEvent)
+	return inv
 }
 
 var ErrBidAmountIsLowerThanTheAskingPrice = errors.New("bid amount is lower than the invoice's asking price")
@@ -44,12 +44,12 @@ var ErrBidAmountIsLowerThanTheAskingPrice = errors.New("bid amount is lower than
 func (inv *Invoice) ProcessBid(bid Bid) {
 	if inv.status != invoiceStatusAvailable || !inv.isMatchingBid(bid) {
 		e := NewBidOnInvoiceRejectedEvent(inv.id, bid)
-		inv.Raise(e)
+		inv.aggregate.Raise(e)
 		return
 	}
 
 	e := NewInvoiceFinancedEvent(inv.id, inv.askingPrice, bid)
-	inv.Raise(e)
+	inv.aggregate.Raise(e)
 }
 
 func (inv *Invoice) isMatchingBid(bid Bid) bool {
@@ -76,7 +76,7 @@ func (inv *Invoice) ReverseFinancing() {
 	}
 
 	e := NewInvoiceReversedEvent(inv.id, *inv.WinningBid)
-	inv.Raise(e)
+	inv.aggregate.Raise(e)
 }
 
 func (inv *Invoice) ApproveFinancing() {
@@ -85,25 +85,21 @@ func (inv *Invoice) ApproveFinancing() {
 	}
 
 	e := NewInvoiceApprovedEvent(inv.id, *inv.WinningBid)
-	inv.Raise(e)
-}
-
-func NewInvoiceFromEvents(events []esrc.Event) *Invoice {
-	inv := &Invoice{}
-	inv.Aggregate = esrc.NewAggregate(inv.onEvent)
-
-	inv.Replay(events)
-
-	return inv
+	inv.aggregate.Raise(e)
 }
 
 func (inv *Invoice) onEvent(event esrc.Event) {
 	switch e := event.(type) {
-	case InvoiceFinancedEvent:
+	case *InvoiceCreatedEvent:
+		inv.id = e.InvoiceID
+		inv.issuerID = e.IssuerID
+		inv.askingPrice = e.AskingPrice
+		inv.status = invoiceStatusAvailable
+	case *InvoiceFinancedEvent:
 		inv.finance(e.Bid)
-	case InvoiceReversedEvent:
+	case *InvoiceReversedEvent:
 		inv.reverse()
-	case InvoiceApprovedEvent:
+	case *InvoiceApprovedEvent:
 		inv.approve()
 	}
 }

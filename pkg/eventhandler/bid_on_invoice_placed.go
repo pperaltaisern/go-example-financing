@@ -30,13 +30,8 @@ func (h *BidOnInvoicePlacedHandler) NewEvent() interface{} {
 func (h *BidOnInvoicePlacedHandler) Handle(ctx context.Context, e interface{}) error {
 	event := e.(*financing.BidOnInvoicePlacedEvent)
 
-	invoice, err := h.invoices.ByID(ctx, event.InvoiceID)
-	if err != nil {
-		return err
-	}
-
-	invoice.ProcessBid(event.Bid)
-
-	h.invoices.Update(ctx, invoice)
-	return nil
+	return h.invoices.Update(ctx, event.InvoiceID, func(invoice *financing.Invoice) error {
+		invoice.ProcessBid(event.Bid)
+		return nil
+	})
 }

@@ -5,13 +5,15 @@ type InvoiceReversedEvent struct {
 	Bid       Bid
 }
 
-func NewInvoiceReversedEvent(invoiceID ID, bid Bid) InvoiceReversedEvent {
-	return InvoiceReversedEvent{
+func NewInvoiceReversedEvent(invoiceID ID, bid Bid) *InvoiceReversedEvent {
+	return &InvoiceReversedEvent{
 		InvoiceID: invoiceID,
 		Bid:       bid,
 	}
 }
 
-func (e InvoiceReversedEvent) IsEvent() {}
-
 func (e InvoiceReversedEvent) EventName() string { return "InvoiceReversedEvent" }
+
+func (e InvoiceReversedEvent) WithAggregateID(id string) {
+	e.InvoiceID = NewIDFrom(id)
+}

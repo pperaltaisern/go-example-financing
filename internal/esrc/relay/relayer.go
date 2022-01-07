@@ -82,6 +82,7 @@ func (c *Relayer) Run() {
 
 func (r *Relayer) relay(ctx context.Context) error {
 	events, err := r.outbox.UnpublishedEvents(ctx)
+	r.log.Debug("unpublished events obtained", zap.Int("count", len(events)))
 	if err != nil {
 		return err
 	}
@@ -90,14 +91,19 @@ func (r *Relayer) relay(ctx context.Context) error {
 	for _, e := range events {
 		err = r.publisher.Publish(ctx, e)
 		if err != nil {
-			r.log.Error("err publishing event", zap.Error(err))
+			r.log.Error("err publishing event", zap.Error(err), zap.Any("aggregateID", e.AggregateID), zap.Uint64("event sequence", e.Sequence))
 			break
 		}
 		published = append(published, e)
 	}
+	r.log.Debug("published events", zap.Int("count", len(events)))
 
 	if len(published) > 0 {
-		return r.outbox.MarkEventsAsPublised(ctx, events)
+		err := r.outbox.MarkEventsAsPublised(ctx, events)
+		if err != nil {
+			return err
+		}
+		r.log.Debug("events have been marked as published")
 	}
 
 	return nil

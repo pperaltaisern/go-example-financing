@@ -30,13 +30,7 @@ func (h *InvoiceReversedHandler) NewEvent() interface{} {
 func (h *InvoiceReversedHandler) Handle(ctx context.Context, e interface{}) error {
 	event := e.(*financing.InvoiceReversedEvent)
 
-	investor, err := h.investors.ByID(ctx, event.Bid.IvestorID)
-	if err != nil {
-		return err
-	}
-
-	investor.ReleaseFunds(event.Bid.Amount)
-
-	h.investors.Update(ctx, investor)
-	return nil
+	return h.investors.Update(ctx, event.Bid.IvestorID, func(investor *financing.Investor) error {
+		return investor.ReleaseFunds(event.Bid.Amount)
+	})
 }

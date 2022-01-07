@@ -2,10 +2,90 @@ package financing
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"ledger/internal/esrc"
 )
 
 type InvoiceRepository interface {
-	ByID(context.Context, ID) (*Invoice, error)
-	Update(context.Context, *Invoice) error
+	Update(context.Context, ID, UpdateInvoice) error
 	Add(context.Context, *Invoice) error
+}
+
+type UpdateInvoice func(inv *Invoice) error
+
+func NewInvoiceRepository(es esrc.EventStore) InvoiceRepository {
+	return invoiceRepository{es: es}
+}
+
+type invoiceRepository struct {
+	es esrc.EventStore
+}
+
+func (r invoiceRepository) Update(ctx context.Context, id ID, update UpdateInvoice) error {
+	inv, err := r.byID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	err = update(inv)
+	if err != nil {
+		return err
+	}
+
+	rawEvents := make([]esrc.RawEvent, len(inv.aggregate.Events()))
+	for i, e := range inv.aggregate.Events() {
+		b, err := json.Marshal(e)
+		if err != nil {
+			return err
+		}
+		rawEvents[i] = esrc.RawEvent{Name: e.EventName(), Data: b}
+	}
+
+	return r.es.AppendEvents(ctx, inv.id, inv.aggregate.Version(), rawEvents)
+}
+
+func (i invoiceRepository) byID(ctx context.Context, id ID) (*Invoice, error) {
+	rawEvents, err := i.es.Load(ctx, esrc.ID(id))
+	if err != nil {
+		return nil, err
+	}
+
+	events := make([]esrc.Event, len(rawEvents))
+	for i, raw := range rawEvents {
+		var e esrc.Event
+		switch raw.Name {
+		case "InvoiceFinancedEvent":
+			e = &InvoiceFinancedEvent{}
+		case "InvoiceReversedEvent":
+			e = &InvoiceReversedEvent{}
+		case "BidOnInvoicePlacedEvent":
+			e = &BidOnInvoicePlacedEvent{}
+		case "InvoiceApprovedEvent":
+			e = &InvoiceApprovedEvent{}
+		default:
+			return nil, fmt.Errorf("unkown event name: %s", raw.Name)
+		}
+		err = json.Unmarshal(raw.Data, e)
+		if err != nil {
+			return nil, err
+		}
+		events[i] = e
+	}
+
+	return newInvoiceFromEvents(events), nil
+}
+
+func (i invoiceRepository) Add(ctx context.Context, inv *Invoice) error {
+	rawEvents := make([]esrc.RawEvent, len(inv.aggregate.Events()))
+	for i, e := range inv.aggregate.Events() {
+		b, err := json.Marshal(e)
+		if err != nil {
+			return err
+		}
+		rawEvents[i] = esrc.RawEvent{Name: e.EventName(), Data: b}
+	}
+
+	const aggregateType esrc.AggregateType = "invoice"
+	return i.es.Create(ctx, aggregateType, inv.id, rawEvents)
 }

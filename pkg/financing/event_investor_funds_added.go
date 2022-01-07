@@ -5,13 +5,15 @@ type InvestorFundsAddedEvent struct {
 	Amount     Money
 }
 
-func NewInvestorFundsAddedEvent(investorID ID, amount Money) InvestorFundsAddedEvent {
-	return InvestorFundsAddedEvent{
+func NewInvestorFundsAddedEvent(investorID ID, amount Money) *InvestorFundsAddedEvent {
+	return &InvestorFundsAddedEvent{
 		InvestorID: investorID,
 		Amount:     amount,
 	}
 }
 
-func (e InvestorFundsAddedEvent) IsEvent() {}
+func (e *InvestorFundsAddedEvent) EventName() string { return "InvestorFundsAddedEvent" }
 
-func (e InvestorFundsAddedEvent) EventName() string { return "InvestorFundsAddedEvent" }
+func (e *InvestorFundsAddedEvent) WithAggregateID(id string) {
+	e.InvestorID = NewIDFrom(id)
+}

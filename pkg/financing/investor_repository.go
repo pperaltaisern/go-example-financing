@@ -8,16 +8,44 @@ import (
 )
 
 type InvestorRepository interface {
-	ByID(context.Context, ID) (*Investor, error)
-	Update(context.Context, *Investor) error
+	Update(context.Context, ID, UpdateInvestor) error
 	Add(context.Context, *Investor) error
+}
+
+type UpdateInvestor func(inv *Investor) error
+
+func NewInvestorRepository(es esrc.EventStore) InvestorRepository {
+	return investorRepository{es: es}
 }
 
 type investorRepository struct {
 	es esrc.EventStore
 }
 
-func (i *investorRepository) byID(ctx context.Context, id ID) (*Investor, error) {
+func (r investorRepository) Update(ctx context.Context, id ID, update UpdateInvestor) error {
+	inv, err := r.byID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	err = update(inv)
+	if err != nil {
+		return err
+	}
+
+	rawEvents := make([]esrc.RawEvent, len(inv.aggregate.Events()))
+	for i, e := range inv.aggregate.Events() {
+		b, err := json.Marshal(e)
+		if err != nil {
+			return err
+		}
+		rawEvents[i] = esrc.RawEvent{Name: e.EventName(), Data: b}
+	}
+
+	return r.es.AppendEvents(ctx, inv.id, inv.aggregate.Version(), rawEvents)
+}
+
+func (i investorRepository) byID(ctx context.Context, id ID) (*Investor, error) {
 	rawEvents, err := i.es.Load(ctx, esrc.ID(id))
 	if err != nil {
 		return nil, err
@@ -28,16 +56,15 @@ func (i *investorRepository) byID(ctx context.Context, id ID) (*Investor, error)
 		var e esrc.Event
 		switch raw.Name {
 		case "InvestorCreatedEvent":
-			e = InvestorCreatedEvent{}
+			e = &InvestorCreatedEvent{}
 		case "InvestorFundsAddedEvent":
-			e = InvestorFundsAddedEvent{}
+			e = &InvestorFundsAddedEvent{}
 		case "BidOnInvoicePlacedEvent":
-			e = BidOnInvoicePlacedEvent{}
+			e = &BidOnInvoicePlacedEvent{}
 		case "InvestorFundsReleasedEvent":
-			e = InvestorFundsReleasedEvent{}
+			e = &InvestorFundsReleasedEvent{}
 		default:
 			return nil, fmt.Errorf("unkown event name: %s", raw.Name)
-		case "":
 		}
 		err = json.Unmarshal(raw.Data, e)
 		if err != nil {
@@ -46,23 +73,10 @@ func (i *investorRepository) byID(ctx context.Context, id ID) (*Investor, error)
 		events[i] = e
 	}
 
-	return newInvestorFromEvents(id, events), nil
+	return newInvestorFromEvents(events), nil
 }
 
-func (i *investorRepository) Update(ctx context.Context, inv *Investor) error {
-	rawEvents := make([]esrc.RawEvent, len(inv.aggregate.Events()))
-	for i, e := range inv.aggregate.Events() {
-		b, err := json.Marshal(e)
-		if err != nil {
-			return err
-		}
-		rawEvents[i] = esrc.RawEvent{Name: e.EventName(), Data: b}
-	}
-
-	return i.es.AppendEvents(ctx, inv.id, inv.aggregate.Version(), rawEvents)
-}
-
-func (i *investorRepository) Add(ctx context.Context, inv *Investor) error {
+func (i investorRepository) Add(ctx context.Context, inv *Investor) error {
 	rawEvents := make([]esrc.RawEvent, len(inv.aggregate.Events()))
 	for i, e := range inv.aggregate.Events() {
 		b, err := json.Marshal(e)

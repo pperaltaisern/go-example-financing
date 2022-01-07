@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"ledger/internal/esrc/esrcpg"
+	"ledger/internal/esrc/esrcwatermill"
 	espostgres "ledger/internal/esrc/postgres"
 	"ledger/internal/esrc/relay"
 	"ledger/internal/watermillzap"
@@ -11,7 +13,6 @@ import (
 	"ledger/pkg/eventhandler"
 	"ledger/pkg/financing"
 	"ledger/pkg/intevent"
-	"ledger/pkg/postgres"
 	"os"
 	"os/signal"
 
@@ -49,7 +50,7 @@ func main() {
 		messageRouter: messageRouter,
 		relayer: relay.NewRelayer(
 			espostgres.NewEventStoreOutbox(pool),
-			Publisher{cqrsFacade.EventBus()},
+			esrcwatermill.NewPublisher(cqrsFacade.EventBus()),
 		),
 	}
 
@@ -110,15 +111,6 @@ func main() {
 	log.Info("closed gracefully")
 }
 
-type Publisher struct {
-	bus *cqrs.EventBus
-}
-
-func (p Publisher) Publish(ctx context.Context, e relay.Event) error {
-	fmt.Println("** Event relayed: ", e)
-	return p.bus.Publish(ctx, e)
-}
-
 func ParseFlags() (c Config, log *zap.Logger, err error) {
 	configFile := flag.String("config", "config_dev.json", "application settings")
 	configDirectory := flag.String("configdir", "./", "config directory")
@@ -144,10 +136,11 @@ type Repositories struct {
 }
 
 func PostgresRepositories(pool *pgxpool.Pool) (Repositories, error) {
+	es := esrcpg.NewEventStore(pool)
 	repos := Repositories{
-		Issuers:   postgres.NewIssuerRepository(pool),
-		Investors: postgres.NewInvestorRepository(pool),
-		Invoices:  postgres.NewInvoiceRepository(pool),
+		Issuers:   financing.NewIssuerRepository(es),
+		Investors: financing.NewInvestorRepository(es),
+		Invoices:  financing.NewInvoiceRepository(es),
 	}
 	return repos, nil
 }
@@ -155,7 +148,9 @@ func PostgresRepositories(pool *pgxpool.Pool) (Repositories, error) {
 func CqrsFacade(config AMQPConfig, repos Repositories, log *zap.Logger) (*cqrs.Facade, *message.Router, error) {
 	wmlog := watermillzap.NewLogger(log)
 
-	cqrsMarshaler := cqrs.JSONMarshaler{}
+	cqrsMarshaler := esrcwatermill.CommandEventMarshaler{
+		CmdMarshaler: cqrs.JSONMarshaler{},
+	}
 	commandsAMQPConfig := amqp.NewDurableQueueConfig(config.Address)
 
 	commandsPublisher, err := amqp.NewPublisher(commandsAMQPConfig, wmlog)

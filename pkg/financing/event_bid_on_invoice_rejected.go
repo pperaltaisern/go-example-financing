@@ -5,13 +5,15 @@ type BidOnInvoiceRejectedEvent struct {
 	Bid       Bid
 }
 
-func NewBidOnInvoiceRejectedEvent(invoiceID ID, bid Bid) BidOnInvoiceRejectedEvent {
-	return BidOnInvoiceRejectedEvent{
+func NewBidOnInvoiceRejectedEvent(invoiceID ID, bid Bid) *BidOnInvoiceRejectedEvent {
+	return &BidOnInvoiceRejectedEvent{
 		InvoiceID: invoiceID,
 		Bid:       bid,
 	}
 }
 
-func (e BidOnInvoiceRejectedEvent) IsEvent() {}
+func (e *BidOnInvoiceRejectedEvent) EventName() string { return "BidOnInvoiceRejectedEvent" }
 
-func (e BidOnInvoiceRejectedEvent) EventName() string { return "BidOnInvoiceRejectedEvent" }
+func (e *BidOnInvoiceRejectedEvent) WithAggregateID(id string) {
+	e.InvoiceID = NewIDFrom(id)
+}

@@ -4,12 +4,14 @@ type IssuerCreatedEvent struct {
 	IssuerID ID
 }
 
-func NewIssuerCreatedEvent(issuerID ID) IssuerCreatedEvent {
-	return IssuerCreatedEvent{
+func NewIssuerCreatedEvent(issuerID ID) *IssuerCreatedEvent {
+	return &IssuerCreatedEvent{
 		IssuerID: issuerID,
 	}
 }
 
-func (e IssuerCreatedEvent) IsEvent() {}
+func (e *IssuerCreatedEvent) EventName() string { return "IssuerCreatedEvent" }
 
-func (e IssuerCreatedEvent) EventName() string { return "IssuerCreatedEvent" }
+func (e *IssuerCreatedEvent) WithAggregateID(id string) {
+	e.IssuerID = NewIDFrom(id)
+}

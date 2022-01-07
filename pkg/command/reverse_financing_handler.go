@@ -26,17 +26,8 @@ func (h *ReverseFinancingHandler) NewCommand() interface{} {
 func (h *ReverseFinancingHandler) Handle(ctx context.Context, c interface{}) error {
 	cmd := c.(*ReverseFinancing)
 
-	invoice, err := h.invoices.ByID(ctx, cmd.InvoiceID)
-	if err != nil {
-		return err
-	}
-
-	invoice.ReverseFinancing()
-
-	err = h.invoices.Update(ctx, invoice)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return h.invoices.Update(ctx, cmd.InvoiceID, func(invoice *financing.Invoice) error {
+		invoice.ReverseFinancing()
+		return nil
+	})
 }
