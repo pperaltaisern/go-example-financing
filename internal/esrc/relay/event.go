@@ -1,15 +1,17 @@
 package relay
 
-type Event struct {
-	ID   uint64
-	Name string
-	Data []byte
+import "ledger/internal/esrc"
+
+type RelayEvent struct {
+	AggregateID esrc.ID
+	Sequence    uint64
+	RawEvent    esrc.RawEvent
 }
 
-func NewEvent(id uint64, name string, data []byte) Event {
-	return Event{
-		ID:   id,
-		Name: name,
-		Data: data,
+func NewRelayEvent(aggregateID esrc.ID, sequence uint64, e esrc.RawEvent) RelayEvent {
+	return RelayEvent{
+		AggregateID: aggregateID,
+		Sequence:    sequence,
+		RawEvent:    e,
 	}
 }

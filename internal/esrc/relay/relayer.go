@@ -61,8 +61,6 @@ func RelayerWithMetrics(syncCallsCount, syncItemsCount metrics.Counter) RelayerO
 	}
 }
 
-// Run starts the Relay loop. Sends a nil error over 'readyC' when a snapshot is completed,
-// or a non-nil error of the reason of why it stopped before being ready.
 func (c *Relayer) Run() {
 	c.log.Info("running Relay")
 
@@ -88,7 +86,7 @@ func (r *Relayer) relay(ctx context.Context) error {
 		return err
 	}
 
-	published := make([]Event, 0, len(events))
+	published := make([]RelayEvent, 0, len(events))
 	for _, e := range events {
 		err = r.publisher.Publish(ctx, e)
 		if err != nil {

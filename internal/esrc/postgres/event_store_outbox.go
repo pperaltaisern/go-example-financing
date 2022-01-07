@@ -2,13 +2,20 @@ package postgres
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"ledger/internal/esrc"
 	"ledger/internal/esrc/relay"
+	"strconv"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type EventStoreOutbox struct {
-	pool *pgxpool.Pool
+	pool     *pgxpool.Pool
+	encodeID func(esrc.ID) string
 }
 
 var _ (relay.EventStoreOutbox) = (*EventStoreOutbox)(nil)
@@ -19,57 +26,51 @@ func NewEventStoreOutbox(pool *pgxpool.Pool) *EventStoreOutbox {
 	}
 }
 
-func (o *EventStoreOutbox) UnpublishedEvents(ctx context.Context) ([]relay.Event, error) {
-	const query = "SELECT id, name, data FROM events WHERE published = FALSE GROUP BY (event_source_id, id) ORDER BY version ASC"
-
-	conn, err := o.pool.Acquire(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Release()
-
-	rows, err := conn.Query(ctx, query)
+func (o *EventStoreOutbox) UnpublishedEvents(ctx context.Context) ([]relay.RelayEvent, error) {
+	const query = "SELECT event_source_id, version, name, data FROM events WHERE published = FALSE ORDER BY version ASC"
+	rows, err := o.pool.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var events []relay.Event
+	var events []relay.RelayEvent
 	for rows.Next() {
-		var id uint64
-		var name string
-		var data []byte
-		err := rows.Scan(&id, &name, &data)
+		var re relay.RelayEvent
+		var id []byte
+		err := rows.Scan(&id, &re.Sequence, &re.RawEvent.Name, &re.RawEvent.Data)
 		if err != nil {
 			return nil, err
 		}
-		re := relay.NewEvent(id, name, data)
+		re.AggregateID, err = uuid.FromBytes(id)
+		if err != nil {
+			return nil, err
+		}
 		events = append(events, re)
 	}
 	return events, nil
 }
 
-func (o *EventStoreOutbox) MarkEventsAsPublised(ctx context.Context, events []relay.Event) error {
-	const update = "UPDATE events SET published = TRUE WHERE id = $1"
-
-	conn, err := o.pool.Acquire(ctx)
-	if err != nil {
-		return err
+func (o *EventStoreOutbox) MarkEventsAsPublised(ctx context.Context, events []relay.RelayEvent) error {
+	if len(events) == 0 {
+		return errors.New("no events to mark as published")
 	}
-	defer conn.Release()
 
-	tx, err := conn.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-
-	for _, e := range events {
-		_, err = tx.Exec(ctx, update, e.ID)
-		if err != nil {
-			return err
+	b := &strings.Builder{}
+	b.WriteString("UPDATE events AS e SET published = TRUE FROM (values")
+	for i := range events {
+		b.WriteString("('")
+		b.WriteString(fmt.Sprintf("%v", events[i].AggregateID))
+		// TODO: UUID should be configurable
+		b.WriteString("'::UUID, ")
+		b.WriteString(strconv.FormatUint(events[i].Sequence, 10))
+		b.WriteString(")")
+		if i+1 != len(events) {
+			b.WriteByte(',')
 		}
 	}
+	b.WriteString(") as p(esid, v) WHERE e.event_source_id = p.esid AND e.version = p.v")
 
-	return tx.Commit(ctx)
+	_, err := o.pool.Exec(ctx, b.String())
+	return err
 }

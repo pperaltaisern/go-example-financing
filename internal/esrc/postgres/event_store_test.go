@@ -18,7 +18,10 @@ func TestEventStoreAcceptance(t *testing.T) {
 	require.NoError(t, err)
 
 	es := NewEventStore(pool)
-	esrctesting.NewEventStoreAcceptance(es).Test(t)
+	o := NewEventStoreOutbox(pool)
+	a := esrctesting.NewEventStoreAcceptance(es,
+		esrctesting.EventStoreAcceptanceWithOutbox(o))
+	a.Test(t)
 }
 
 func integrationTest(t *testing.T) {
