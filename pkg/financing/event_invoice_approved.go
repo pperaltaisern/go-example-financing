@@ -1,7 +1,7 @@
 package financing
 
 type InvoiceApprovedEvent struct {
-	InvoiceID ID
+	InvoiceID ID `json:"-"`
 	Bid       Bid
 }
 
@@ -14,6 +14,6 @@ func NewInvoiceApprovedEvent(invoiceID ID, bid Bid) *InvoiceApprovedEvent {
 
 func (e *InvoiceApprovedEvent) EventName() string { return "InvoiceApprovedEvent" }
 
-func (e InvoiceApprovedEvent) WithAggregateID(id string) {
+func (e *InvoiceApprovedEvent) WithAggregateID(id string) {
 	e.InvoiceID = NewIDFrom(id)
 }

@@ -1,7 +1,7 @@
 package financing
 
 type InvestorFundsAddedEvent struct {
-	InvestorID ID
+	InvestorID ID `json:"-"`
 	Amount     Money
 }
 

@@ -1,7 +1,7 @@
 package financing
 
 type IssuerCreatedEvent struct {
-	IssuerID ID
+	IssuerID ID `json:"-"`
 }
 
 func NewIssuerCreatedEvent(issuerID ID) *IssuerCreatedEvent {

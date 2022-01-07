@@ -1,7 +1,7 @@
 package financing
 
 type InvoiceFinancedEvent struct {
-	InvoiceID   ID
+	InvoiceID   ID `json:"-"`
 	AskingPrice Money
 	Bid         Bid
 }

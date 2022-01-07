@@ -1,7 +1,7 @@
 package financing
 
 type BidOnInvoiceRejectedEvent struct {
-	InvoiceID ID
+	InvoiceID ID `json:"-"`
 	Bid       Bid
 }
 

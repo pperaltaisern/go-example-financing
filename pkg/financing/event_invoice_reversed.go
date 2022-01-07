@@ -1,7 +1,7 @@
 package financing
 
 type InvoiceReversedEvent struct {
-	InvoiceID ID
+	InvoiceID ID `json:"-"`
 	Bid       Bid
 }
 
