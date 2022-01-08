@@ -5,18 +5,18 @@ go 1.17
 require (
 	github.com/ThreeDotsLabs/watermill v1.2.0-rc.6
 	github.com/ThreeDotsLabs/watermill-amqp v1.1.4
-	github.com/google/uuid v1.3.0
-	github.com/jackc/pgconn v1.10.1
-	github.com/jackc/pgx/v4 v4.14.1
-	github.com/spf13/viper v1.10.1
-	github.com/stretchr/testify v1.7.0
-	go.uber.org/zap v1.17.0
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/go-kit/kit v0.9.0
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
+	github.com/google/uuid v1.3.0
+	github.com/jackc/pgconn v1.10.1
 	github.com/jackc/pgerrcode v0.0.0-20201024163028-a0d42d470451
+	github.com/jackc/pgx/v4 v4.14.1
 	github.com/lib/pq v1.10.4 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/spf13/viper v1.10.1
+	github.com/stretchr/testify v1.7.0
+	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e // indirect
 )
 

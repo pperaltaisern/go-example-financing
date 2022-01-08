@@ -33,15 +33,14 @@ func (r invoiceRepository) Update(ctx context.Context, id ID, update UpdateInvoi
 		return err
 	}
 
-	rawEvents := make([]esrc.RawEvent, len(inv.aggregate.Events()))
-	for i, e := range inv.aggregate.Events() {
-		b, err := json.Marshal(e)
-		if err != nil {
-			return err
-		}
-		rawEvents[i] = esrc.RawEvent{Name: e.EventName(), Data: b}
+	newEvents := inv.aggregate.Events()
+	if len(newEvents) == 0 {
+		return nil
 	}
-
+	rawEvents, err := esrc.MarshalEventsJSON(newEvents)
+	if err != nil {
+		return err
+	}
 	return r.es.AppendEvents(ctx, inv.id, inv.aggregate.Version(), rawEvents)
 }
 
@@ -55,6 +54,8 @@ func (i invoiceRepository) byID(ctx context.Context, id ID) (*Invoice, error) {
 	for i, raw := range rawEvents {
 		var e esrc.Event
 		switch raw.Name {
+		case "InvoiceCreatedEvent":
+			e = &InvoiceCreatedEvent{}
 		case "InvoiceFinancedEvent":
 			e = &InvoiceFinancedEvent{}
 		case "InvoiceReversedEvent":
@@ -77,13 +78,9 @@ func (i invoiceRepository) byID(ctx context.Context, id ID) (*Invoice, error) {
 }
 
 func (i invoiceRepository) Add(ctx context.Context, inv *Invoice) error {
-	rawEvents := make([]esrc.RawEvent, len(inv.aggregate.Events()))
-	for i, e := range inv.aggregate.Events() {
-		b, err := json.Marshal(e)
-		if err != nil {
-			return err
-		}
-		rawEvents[i] = esrc.RawEvent{Name: e.EventName(), Data: b}
+	rawEvents, err := esrc.MarshalEventsJSON(inv.aggregate.Events())
+	if err != nil {
+		return err
 	}
 
 	const aggregateType esrc.AggregateType = "invoice"

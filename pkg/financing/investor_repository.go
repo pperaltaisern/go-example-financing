@@ -32,14 +32,13 @@ func (r investorRepository) Update(ctx context.Context, id ID, update UpdateInve
 	if err != nil {
 		return err
 	}
-
-	rawEvents := make([]esrc.RawEvent, len(inv.aggregate.Events()))
-	for i, e := range inv.aggregate.Events() {
-		b, err := json.Marshal(e)
-		if err != nil {
-			return err
-		}
-		rawEvents[i] = esrc.RawEvent{Name: e.EventName(), Data: b}
+	newEvents := inv.aggregate.Events()
+	if len(newEvents) == 0 {
+		return nil
+	}
+	rawEvents, err := esrc.MarshalEventsJSON(newEvents)
+	if err != nil {
+		return err
 	}
 
 	return r.es.AppendEvents(ctx, inv.id, inv.aggregate.Version(), rawEvents)

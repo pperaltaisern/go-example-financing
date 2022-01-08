@@ -28,29 +28,33 @@ func newInvestorFromEvents(events []esrc.Event) *Investor {
 	return inv
 }
 
-func (inv *Investor) AddFunds(amount Money) error {
+func (inv *Investor) AddFunds(amount Money) {
 	e := NewInvestorFundsAddedEvent(inv.id, amount)
 	inv.aggregate.Raise(e)
-	return nil
 }
 
 var ErrNotEnoughtBalance = errors.New("there isn't enough balance")
 
 func (inv *Investor) BidOnInvoice(invoiceID ID, amount Money) error {
+	if amount <= 0 {
+		return nil
+	}
 	if !inv.hasEnoughBalance(amount) {
 		return ErrNotEnoughtBalance
 	}
-	bid := NewBid(inv.id, amount)
-	e := NewBidOnInvoicePlacedEvent(invoiceID, bid)
+	e := NewBidOnInvoicePlacedEvent(inv.id, invoiceID, amount)
 	inv.aggregate.Raise(e)
 	return nil
 }
 
-var ErrNotEnoughtBalanceReservedToRelease = errors.New("there isn't enough balance reserved to release")
+var ErrNotEnoughReservedFundsToRelease = errors.New("there isn't enough balance reserved to release")
 
 func (inv *Investor) ReleaseFunds(amount Money) error {
-	if !inv.hasEnoughBalanceReserved(amount) {
-		return ErrNotEnoughtBalanceReservedToRelease
+	if amount <= 0 {
+		return nil
+	}
+	if !inv.hasEnoughReservedFunds(amount) {
+		return ErrNotEnoughReservedFundsToRelease
 	}
 	e := NewInvestorFundsReleasedEvent(inv.id, amount)
 	inv.aggregate.Raise(e)
@@ -61,8 +65,8 @@ func (inv *Investor) hasEnoughBalance(amount Money) bool {
 	return inv.balance >= amount
 }
 
-func (inv *Investor) hasEnoughBalanceReserved(amount Money) bool {
-	return inv.reserved < amount
+func (inv *Investor) hasEnoughReservedFunds(amount Money) bool {
+	return inv.reserved >= amount
 }
 
 func (inv *Investor) addFunds(amount Money) {
@@ -86,7 +90,7 @@ func (inv *Investor) onEvent(event esrc.Event) {
 	case *InvestorFundsAddedEvent:
 		inv.addFunds(e.Amount)
 	case *BidOnInvoicePlacedEvent:
-		inv.reserveFunds(e.Bid.Amount)
+		inv.reserveFunds(e.BidAmount)
 	case *InvestorFundsReleasedEvent:
 		inv.releaseFunds(e.Amount)
 	}

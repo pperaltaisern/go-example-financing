@@ -12,7 +12,7 @@ type Invoice struct {
 	issuerID    ID
 	askingPrice Money
 	status      invoiceStatus
-	WinningBid  *Bid
+	winningBid  *Bid
 }
 
 type invoiceStatus byte
@@ -58,12 +58,11 @@ func (inv *Invoice) isMatchingBid(bid Bid) bool {
 
 func (inv *Invoice) finance(bid Bid) {
 	inv.status = invoiceStatusFinanced
-	inv.WinningBid = &bid
+	inv.winningBid = &bid
 }
 
 func (inv *Invoice) reverse() {
 	inv.status = invoiceStatusReversed
-	inv.WinningBid = nil
 }
 
 func (inv *Invoice) approve() {
@@ -75,7 +74,7 @@ func (inv *Invoice) ReverseFinancing() {
 		return
 	}
 
-	e := NewInvoiceReversedEvent(inv.id, *inv.WinningBid)
+	e := NewInvoiceReversedEvent(inv.id, *inv.winningBid)
 	inv.aggregate.Raise(e)
 }
 
@@ -84,7 +83,7 @@ func (inv *Invoice) ApproveFinancing() {
 		return
 	}
 
-	e := NewInvoiceApprovedEvent(inv.id, *inv.WinningBid)
+	e := NewInvoiceApprovedEvent(inv.id, *inv.winningBid)
 	inv.aggregate.Raise(e)
 }
 

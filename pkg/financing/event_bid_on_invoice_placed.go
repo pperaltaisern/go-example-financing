@@ -1,19 +1,21 @@
 package financing
 
 type BidOnInvoicePlacedEvent struct {
-	InvoiceID ID `json:"-"`
-	Bid       Bid
+	InvestorID ID `json:"-"`
+	InvoiceID  ID
+	BidAmount  Money
 }
 
-func NewBidOnInvoicePlacedEvent(invoiceID ID, bid Bid) *BidOnInvoicePlacedEvent {
+func NewBidOnInvoicePlacedEvent(investorID, invoiceID ID, bidAmount Money) *BidOnInvoicePlacedEvent {
 	return &BidOnInvoicePlacedEvent{
-		InvoiceID: invoiceID,
-		Bid:       bid,
+		InvestorID: investorID,
+		InvoiceID:  invoiceID,
+		BidAmount:  bidAmount,
 	}
 }
 
 func (e *BidOnInvoicePlacedEvent) EventName() string { return "BidOnInvoicePlacedEvent" }
 
 func (e *BidOnInvoicePlacedEvent) WithAggregateID(id string) {
-	e.InvoiceID = NewIDFrom(id)
+	e.InvestorID = NewIDFrom(id)
 }

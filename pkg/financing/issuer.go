@@ -16,9 +16,9 @@ func NewIssuer(id ID) *Issuer {
 	return inv
 }
 
-func NewIssuerFromEvents(events []esrc.Event) *Issuer {
+func newIssuerFromEvents(events []esrc.Event) *Issuer {
 	inv := &Issuer{}
-	inv.aggregate = esrc.NewAggregate(inv.onEvent)
+	inv.aggregate = esrc.NewAggregateFromEvents(events, inv.onEvent)
 	return inv
 }
 

@@ -86,6 +86,9 @@ func (r *Relayer) relay(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if len(events) == 0 {
+		return nil
+	}
 
 	published := make([]RelayEvent, 0, len(events))
 	for _, e := range events {

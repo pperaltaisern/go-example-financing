@@ -31,7 +31,8 @@ func (h *BidOnInvoicePlacedHandler) Handle(ctx context.Context, e interface{}) e
 	event := e.(*financing.BidOnInvoicePlacedEvent)
 
 	return h.invoices.Update(ctx, event.InvoiceID, func(invoice *financing.Invoice) error {
-		invoice.ProcessBid(event.Bid)
+		bid := financing.NewBid(event.InvestorID, event.BidAmount)
+		invoice.ProcessBid(bid)
 		return nil
 	})
 }

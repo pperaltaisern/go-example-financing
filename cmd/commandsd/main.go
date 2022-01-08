@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"ledger/internal/esrc/esrcpg"
 	"ledger/internal/esrc/esrcwatermill"
-	espostgres "ledger/internal/esrc/postgres"
 	"ledger/internal/esrc/relay"
 	"ledger/internal/watermillzap"
 	"ledger/pkg/command"
@@ -49,8 +48,9 @@ func main() {
 		log:           log,
 		messageRouter: messageRouter,
 		relayer: relay.NewRelayer(
-			espostgres.NewEventStoreOutbox(pool),
+			esrcpg.NewEventStoreOutbox(pool),
 			esrcwatermill.NewPublisher(cqrsFacade.EventBus()),
+			relay.RelayerWithLogger(log),
 		),
 	}
 
@@ -87,7 +87,7 @@ func main() {
 
 		// cmd := command.SellInvoice{
 		// 	InvoiceID:   financing.NewID(),
-		// 	IssuerID:    financing.NewIDFrom("dfb61025-037e-42dd-bcc0-f7904ae3000e"),
+		// 	IssuerID:    financing.NewIDFrom("37bca316-3b73-4caf-8230-6e4f287ab2e1"),
 		// 	AskingPrice: 20,
 		// }
 		// err = cqrsFacade.CommandBus().Send(context.Background(), cmd)
@@ -96,8 +96,8 @@ func main() {
 		// }
 
 		cmd := command.BidOnInvoice{
-			InvoiceID:  financing.NewIDFrom("df7531f9-afa4-44f8-b1e0-70a0c9b6991d"),
-			InvestorID: financing.NewIDFrom("5f5ef4e2-947c-4ccc-805f-dddefc664b7b"),
+			InvoiceID:  financing.NewIDFrom("89a332f9-0cd7-4a43-8770-6bf5027ef1e7"),
+			InvestorID: financing.NewIDFrom("ca8573f2-203a-4d9e-bd2c-621edf7b9eed"),
 			BidAmount:  35,
 		}
 		err = cqrsFacade.CommandBus().Send(context.Background(), cmd)
@@ -148,8 +148,10 @@ func PostgresRepositories(pool *pgxpool.Pool) (Repositories, error) {
 func CqrsFacade(config AMQPConfig, repos Repositories, log *zap.Logger) (*cqrs.Facade, *message.Router, error) {
 	wmlog := watermillzap.NewLogger(log)
 
-	cqrsMarshaler := esrcwatermill.CommandEventMarshaler{
-		CmdMarshaler: cqrs.JSONMarshaler{},
+	cqrsMarshaler := esrcwatermill.RelayEventMarshaler{
+		CmdMarshaler: cqrs.JSONMarshaler{
+			GenerateName: cqrs.StructName,
+		},
 	}
 	commandsAMQPConfig := amqp.NewDurableQueueConfig(config.Address)
 

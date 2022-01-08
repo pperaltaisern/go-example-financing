@@ -1,7 +1,7 @@
 package financing
 
 type InvestorCreatedEvent struct {
-	InvestorID ID `json:"-"`
+	InvestorID ID
 }
 
 func NewInvestorCreatedEvent(investorID ID) *InvestorCreatedEvent {
@@ -11,7 +11,3 @@ func NewInvestorCreatedEvent(investorID ID) *InvestorCreatedEvent {
 }
 
 func (e *InvestorCreatedEvent) EventName() string { return "InvestorCreatedEvent" }
-
-func (e *InvestorCreatedEvent) WithAggregateID(id string) {
-	e.InvestorID = NewIDFrom(id)
-}

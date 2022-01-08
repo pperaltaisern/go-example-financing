@@ -2,7 +2,6 @@ package financing
 
 import (
 	"context"
-	"encoding/json"
 	"ledger/internal/esrc"
 )
 
@@ -23,16 +22,12 @@ func (r issuerRepository) Contains(ctx context.Context, id ID) (bool, error) {
 	return r.es.Contains(ctx, id)
 }
 
-func (i issuerRepository) Add(ctx context.Context, inv *Issuer) error {
-	rawEvents := make([]esrc.RawEvent, len(inv.aggregate.Events()))
-	for i, e := range inv.aggregate.Events() {
-		b, err := json.Marshal(e)
-		if err != nil {
-			return err
-		}
-		rawEvents[i] = esrc.RawEvent{Name: e.EventName(), Data: b}
+func (i issuerRepository) Add(ctx context.Context, iss *Issuer) error {
+	rawEvents, err := esrc.MarshalEventsJSON(iss.aggregate.Events())
+	if err != nil {
+		return err
 	}
 
 	const aggregateType esrc.AggregateType = "issuer"
-	return i.es.Create(ctx, aggregateType, inv.id, rawEvents)
+	return i.es.Create(ctx, aggregateType, iss.id, rawEvents)
 }
