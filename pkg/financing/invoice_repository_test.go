@@ -2,7 +2,6 @@ package financing
 
 import (
 	"context"
-	"encoding/json"
 	"ledger/internal/esrc"
 	"testing"
 
@@ -15,16 +14,8 @@ func TestInvoiceRepository_Update(t *testing.T) {
 		NewInvoiceCreatedEvent(invoiceID, NewID(), 100),
 		NewInvoiceFinancedEvent(invoiceID, 100, NewBid(NewID(), 100)),
 	}
-	rawEvents := make([]esrc.RawEvent, len(events))
-	for i, e := range events {
-		b, err := json.Marshal(e)
-		require.NoError(t, err)
-
-		rawEvents[i] = esrc.RawEvent{
-			Name: e.EventName(),
-			Data: b,
-		}
-	}
+	rawEvents, err := esrc.MarshalEvents(events, esrc.JSONEventMarshaler{})
+	require.NoError(t, err)
 
 	var calls int
 	es := &esrc.MockEventStore{
@@ -40,8 +31,9 @@ func TestInvoiceRepository_Update(t *testing.T) {
 			return nil
 		},
 	}
+
 	r := NewInvoiceRepository(es)
-	err := r.Update(context.Background(), invoiceID, func(inv *Invoice) error {
+	err = r.Update(context.Background(), invoiceID, func(inv *Invoice) error {
 		inv.ApproveFinancing()
 		return nil
 	})

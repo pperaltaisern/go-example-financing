@@ -2,7 +2,6 @@ package financing
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"ledger/internal/esrc"
 )
@@ -14,12 +13,35 @@ type InvoiceRepository interface {
 
 type UpdateInvoice func(inv *Invoice) error
 
-func NewInvoiceRepository(es esrc.EventStore) InvoiceRepository {
-	return invoiceRepository{es: es}
+type invoiceRepository struct {
+	r esrc.Repository
 }
 
-type invoiceRepository struct {
-	es esrc.EventStore
+func NewInvoiceRepository(es esrc.EventStore) InvoiceRepository {
+	return invoiceRepository{
+		r: esrc.NewRepository("invoice", es, invoiceEventsFactory{}, esrc.JSONEventMarshaler{}),
+	}
+}
+
+type invoiceEventsFactory struct{}
+
+func (invoiceEventsFactory) CreateEmptyEvent(name string) (esrc.Event, error) {
+	var e esrc.Event
+	switch name {
+	case "InvoiceCreatedEvent":
+		e = &InvoiceCreatedEvent{}
+	case "InvoiceFinancedEvent":
+		e = &InvoiceFinancedEvent{}
+	case "InvoiceReversedEvent":
+		e = &InvoiceReversedEvent{}
+	case "BidOnInvoicePlacedEvent":
+		e = &BidOnInvoicePlacedEvent{}
+	case "InvoiceApprovedEvent":
+		e = &InvoiceApprovedEvent{}
+	default:
+		return nil, fmt.Errorf("unkown event name: %s", name)
+	}
+	return e, nil
 }
 
 func (r invoiceRepository) Update(ctx context.Context, id ID, update UpdateInvoice) error {
@@ -33,56 +55,17 @@ func (r invoiceRepository) Update(ctx context.Context, id ID, update UpdateInvoi
 		return err
 	}
 
-	newEvents := inv.aggregate.Events()
-	if len(newEvents) == 0 {
-		return nil
-	}
-	rawEvents, err := esrc.MarshalEventsJSON(newEvents)
-	if err != nil {
-		return err
-	}
-	return r.es.AppendEvents(ctx, inv.id, inv.aggregate.Version(), rawEvents)
+	return r.r.Update(ctx, id, inv.aggregate.Version(), inv.aggregate.Events())
 }
 
-func (i invoiceRepository) byID(ctx context.Context, id ID) (*Invoice, error) {
-	rawEvents, err := i.es.Load(ctx, esrc.ID(id))
+func (r invoiceRepository) byID(ctx context.Context, id ID) (*Invoice, error) {
+	events, err := r.r.ByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-
-	events := make([]esrc.Event, len(rawEvents))
-	for i, raw := range rawEvents {
-		var e esrc.Event
-		switch raw.Name {
-		case "InvoiceCreatedEvent":
-			e = &InvoiceCreatedEvent{}
-		case "InvoiceFinancedEvent":
-			e = &InvoiceFinancedEvent{}
-		case "InvoiceReversedEvent":
-			e = &InvoiceReversedEvent{}
-		case "BidOnInvoicePlacedEvent":
-			e = &BidOnInvoicePlacedEvent{}
-		case "InvoiceApprovedEvent":
-			e = &InvoiceApprovedEvent{}
-		default:
-			return nil, fmt.Errorf("unkown event name: %s", raw.Name)
-		}
-		err = json.Unmarshal(raw.Data, e)
-		if err != nil {
-			return nil, err
-		}
-		events[i] = e
-	}
-
 	return newInvoiceFromEvents(events), nil
 }
 
-func (i invoiceRepository) Add(ctx context.Context, inv *Invoice) error {
-	rawEvents, err := esrc.MarshalEventsJSON(inv.aggregate.Events())
-	if err != nil {
-		return err
-	}
-
-	const aggregateType esrc.AggregateType = "invoice"
-	return i.es.Create(ctx, aggregateType, inv.id, rawEvents)
+func (r invoiceRepository) Add(ctx context.Context, inv *Invoice) error {
+	return r.r.Add(ctx, inv.id, inv.aggregate.Events())
 }

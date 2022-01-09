@@ -1,5 +1,6 @@
 package esrc
 
+// Aggregate is a helper struct that handles the versioning and the application of events
 type Aggregate struct {
 	changes []Event
 	version int
