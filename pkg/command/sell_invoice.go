@@ -7,3 +7,11 @@ type SellInvoice struct {
 	IssuerID    financing.ID
 	AskingPrice financing.Money
 }
+
+func NewSellInvoice(invoiceID, issuerID financing.ID, askingPrice financing.Money) *SellInvoice {
+	return &SellInvoice{
+		InvoiceID:   invoiceID,
+		IssuerID:    issuerID,
+		AskingPrice: askingPrice,
+	}
+}

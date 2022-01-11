@@ -3,7 +3,15 @@ package command
 import "ledger/pkg/financing"
 
 type BidOnInvoice struct {
-	InvoiceID  financing.ID
 	InvestorID financing.ID
+	InvoiceID  financing.ID
 	BidAmount  financing.Money
+}
+
+func NewBidOnInvoice(investorID, invoiceID financing.ID, bidAmount financing.Money) *BidOnInvoice {
+	return &BidOnInvoice{
+		InvestorID: investorID,
+		InvoiceID:  invoiceID,
+		BidAmount:  bidAmount,
+	}
 }

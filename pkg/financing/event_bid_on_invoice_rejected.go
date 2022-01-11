@@ -15,5 +15,5 @@ func NewBidOnInvoiceRejectedEvent(invoiceID ID, bid Bid) *BidOnInvoiceRejectedEv
 func (e *BidOnInvoiceRejectedEvent) EventName() string { return "BidOnInvoiceRejectedEvent" }
 
 func (e *BidOnInvoiceRejectedEvent) WithAggregateID(id string) {
-	e.InvoiceID = NewIDFrom(id)
+	e.InvoiceID = NewIDFromString(id)
 }

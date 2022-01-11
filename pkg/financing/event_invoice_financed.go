@@ -17,5 +17,5 @@ func NewInvoiceFinancedEvent(invoiceID ID, askingPrice Money, bid Bid) *InvoiceF
 func (e *InvoiceFinancedEvent) EventName() string { return "InvoiceFinancedEvent" }
 
 func (e *InvoiceFinancedEvent) WithAggregateID(id string) {
-	e.InvoiceID = NewIDFrom(id)
+	e.InvoiceID = NewIDFromString(id)
 }

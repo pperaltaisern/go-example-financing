@@ -12,8 +12,13 @@ func NewID() ID {
 	return ID(uuid.New())
 }
 
-func NewIDFrom(text string) ID {
+func NewIDFromString(text string) ID {
 	return ID(uuid.MustParse(text))
+}
+
+func TryNewIDFromString(text string) (ID, error) {
+	id, err := uuid.Parse(text)
+	return ID(id), err
 }
 
 func (id ID) String() string {

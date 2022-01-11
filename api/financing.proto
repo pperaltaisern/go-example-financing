@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "../pkg/grpc/pb";
+
+message UUID {
+	string value = 1;
+}
+
+message Money {
+	double amount = 1;
+}

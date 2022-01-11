@@ -9,8 +9,14 @@ import (
 )
 
 type Config struct {
-	AMQP     AMQPConfig
-	Postgres PostgresConfig
+	CommandServer CommandServerConfig
+	AMQP          AMQPConfig
+	Postgres      PostgresConfig
+}
+
+type CommandServerConfig struct {
+	Network string
+	Address string
 }
 
 type AMQPConfig struct {

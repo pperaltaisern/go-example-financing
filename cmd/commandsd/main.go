@@ -11,6 +11,7 @@ import (
 	"ledger/pkg/command"
 	"ledger/pkg/eventhandler"
 	"ledger/pkg/financing"
+	"ledger/pkg/grpc"
 	"ledger/pkg/intevent"
 	"os"
 	"os/signal"
@@ -33,7 +34,6 @@ func main() {
 	if err != nil {
 		log.Fatal("err connecting to Postgres: %v", zap.Error(err))
 	}
-
 	repos, err := PostgresRepositories(pool)
 	if err != nil {
 		log.Fatal("err building Postgres repositories: %v", zap.Error(err))
@@ -43,10 +43,14 @@ func main() {
 	if err != nil {
 		log.Fatal("err building CQRS facade: %v", zap.Error(err))
 	}
-
 	m := Main{
 		log:           log,
 		messageRouter: messageRouter,
+		commandServer: grpc.NewCommandServer(
+			config.CommandServer.Network,
+			config.CommandServer.Address,
+			cqrsFacade.CommandBus(),
+		),
 		relayer: relay.NewRelayer(
 			esrcpg.NewEventStoreOutbox(pool),
 			esrcwatermill.NewPublisher(cqrsFacade.EventBus()),
@@ -54,18 +58,16 @@ func main() {
 		),
 	}
 
-	errC := make(chan error, 2)
+	errC := make(chan error, 4)
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt)
 		errC <- fmt.Errorf("%s", <-c)
 	}()
 
-	go func() {
-		errC <- m.Run()
-	}()
+	m.Run(errC)
 
-	if true {
+	if false {
 		// inv := intevent.InvestorRegistered{
 		// 	ID:      financing.NewID(),
 		// 	Name:    "INVESTOR_1",
@@ -96,8 +98,8 @@ func main() {
 		// }
 
 		cmd := command.BidOnInvoice{
-			InvoiceID:  financing.NewIDFrom("89a332f9-0cd7-4a43-8770-6bf5027ef1e7"),
-			InvestorID: financing.NewIDFrom("ca8573f2-203a-4d9e-bd2c-621edf7b9eed"),
+			InvoiceID:  financing.NewIDFromString("89a332f9-0cd7-4a43-8770-6bf5027ef1e7"),
+			InvestorID: financing.NewIDFromString("ca8573f2-203a-4d9e-bd2c-621edf7b9eed"),
 			BidAmount:  35,
 		}
 		err = cqrsFacade.CommandBus().Send(context.Background(), cmd)
@@ -238,11 +240,13 @@ type Main struct {
 	log           *zap.Logger
 	messageRouter *message.Router
 	relayer       *relay.Relayer
+	commandServer *grpc.CommandServer
 }
 
-func (m *Main) Run() error {
+func (m *Main) Run(errC chan<- error) {
 	go m.relayer.Run()
-	return m.messageRouter.Run(context.Background())
+	go func() { errC <- m.messageRouter.Run(context.Background()) }()
+	go func() { errC <- m.commandServer.Open() }()
 }
 
 func (m *Main) Close() {
@@ -251,5 +255,6 @@ func (m *Main) Close() {
 	if err != nil {
 		m.log.Error("err clossing message router %v: err")
 	}
+	m.commandServer.Close()
 	m.log.Sync()
 }

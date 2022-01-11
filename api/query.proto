@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+import "api/financing.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "../pkg/grpc/pb";
+
+
+service Queries {
+    rpc AllInvestors(google.protobuf.Empty) returns (AllInvestorsReply);
+    rpc AllInvoices(google.protobuf.Empty) returns (AllInvoicesReply);
+}
+
+message AllInvestorsReply {
+    repeated Investor investors = 1;
+}
+
+message Investor {
+	UUID id = 1;
+	Money balance  = 2;
+	Money reserved = 3;
+}
+
+message AllInvoicesReply {
+	repeated Invoice invoices = 1;
+}
+
+message Invoice {
+	UUID id         = 1;
+	UUID issuer_id   = 2;
+	Money asking_price = 3;
+	InvoiceStatus status = 4;
+	optional Bid winning_bid = 5;
+}
+
+enum InvoiceStatus {
+	AVAILABLE = 0;
+	FINANCED = 1;
+	APPROVED = 2;
+	REVERSED = 3;
+}
+
+
+message Bid {
+	UUID investor_id = 1;
+	Money amount = 2;
+}

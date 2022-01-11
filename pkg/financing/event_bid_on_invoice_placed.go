@@ -17,5 +17,5 @@ func NewBidOnInvoicePlacedEvent(investorID, invoiceID ID, bidAmount Money) *BidO
 func (e *BidOnInvoicePlacedEvent) EventName() string { return "BidOnInvoicePlacedEvent" }
 
 func (e *BidOnInvoicePlacedEvent) WithAggregateID(id string) {
-	e.InvestorID = NewIDFrom(id)
+	e.InvestorID = NewIDFromString(id)
 }

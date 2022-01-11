@@ -15,5 +15,5 @@ func NewInvestorFundsReleasedEvent(investorID ID, amount Money) *InvestorFundsRe
 func (e *InvestorFundsReleasedEvent) EventName() string { return "InvestorFundsReleasedEvent" }
 
 func (e *InvestorFundsReleasedEvent) WithAggregateID(id string) {
-	e.InvestorID = NewIDFrom(id)
+	e.InvestorID = NewIDFromString(id)
 }

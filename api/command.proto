@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+import "api/financing.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "../pkg/grpc/pb";
+
+
+service Commands {
+	rpc SellInvoice(SellInvoiceCommand) returns (UUID);
+	rpc BidOnInvoice(BidOnInvoiceCommand) returns (google.protobuf.Empty);
+	rpc ApproveFinancing(ApproveFinancingCommand) returns (google.protobuf.Empty);
+	rpc ReverseFinancing(ReverseFinancingCommand) returns (google.protobuf.Empty);
+}
+
+message SellInvoiceCommand {
+	UUID issuer_id = 1;
+	Money asking_price = 2;
+}
+
+message BidOnInvoiceCommand {
+	UUID investor_id = 1;
+	UUID invoice_id = 2;
+	Money bid = 3;
+}
+
+message ApproveFinancingCommand {
+	UUID invoice_id = 1;
+}
+
+message ReverseFinancingCommand {
+	UUID invoice_id = 1;
+}
+
