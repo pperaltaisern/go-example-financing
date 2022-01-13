@@ -13,6 +13,10 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+func init() {
+	viper.AutomaticEnv()
+}
+
 type ServerConfig struct {
 	Network string
 	Port    string
@@ -21,7 +25,7 @@ type ServerConfig struct {
 func LoadServerConfig() ServerConfig {
 	return ServerConfig{
 		Network: "tcp",
-		Port:    viper.GetString("SERVER_PORT"),
+		Port:    viper.GetString("SERVER_ADDRESS"),
 	}
 }
 

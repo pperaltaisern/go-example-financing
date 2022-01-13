@@ -25,6 +25,8 @@ type CommandServer struct {
 
 func NewCommandServer(network, address string, bus *cqrs.CommandBus) *CommandServer {
 	s := &CommandServer{
+		network:    network,
+		address:    address,
 		commandBus: bus,
 		server:     grpc.NewServer(),
 	}
@@ -36,7 +38,7 @@ func NewCommandServer(network, address string, bus *cqrs.CommandBus) *CommandSer
 func (s *CommandServer) Open() error {
 	l, err := net.Listen(s.network, s.address)
 	if err != nil {
-		return err
+		return fmt.Errorf("opening CommandServer for network: %s and address: %s, err: %v", s.network, s.address, err)
 	}
 	return s.server.Serve(l)
 }

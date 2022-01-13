@@ -1,19 +1,41 @@
 version: '3.7'
 services:
+    financing-commands:
+        build: 
+          context: .
+          dockerfile: ./build/commandsd/Dockerfile
+        restart: always    
+        ports:
+          - "8080:8080"
+        networks:
+          - postgres
+          - rabbitmq_go_net
+        environment:
+          - SERVER_ADDRESS=0.0.0.0:8080
+          - LOGGER_LEVEL=DEBUG
+          - DB_CONNECTION_STRING=user=postgres password=postgres host=postgres port=5432 dbname=postgres pool_max_conns=10
+          - AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672/
+        depends_on:
+          - postgres
+          - rabbitmq
+
     postgres:
         image: postgres
         restart: always
         environment: 
+          - POSTGRES_HOST=postgres
           - POSTGRES_USER=postgres
           - POSTGRES_PASSWORD=postgres
         logging:
           options:
             max-size: 10m
             max-file: "3"
+        networks:
+          - postgres
         ports:
           - '5432:5432'
         volumes:
-          - ./build/postgres-data:/var/lib/postgresql/data
+          - ./build/volumes/postgres-data:/var/lib/postgresql/data
           - ./build/postgres:/docker-entrypoint-initdb.d
 
     rabbitmq:
@@ -23,11 +45,12 @@ services:
         - 5672:5672
         - 15672:15672
       volumes:
-          - ./build/rabbitmq/data/:/var/lib/rabbitmq/
-          - ./build/rabbitmq/log/:/var/log/rabbitmq
+          - ./build/volumes/rabbitmq/data/:/var/lib/rabbitmq/
+          - ./build/volumes/rabbitmq/log/:/var/log/rabbitmq
       networks:
         - rabbitmq_go_net
 
 networks:
+  postgres:
   rabbitmq_go_net:
     driver: bridge
