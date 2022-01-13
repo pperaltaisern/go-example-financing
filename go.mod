@@ -1,4 +1,4 @@
-module ledger
+module github.com/pperaltaisern/financing
 
 go 1.17
 

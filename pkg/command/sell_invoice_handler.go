@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 	"fmt"
-	"ledger/pkg/financing"
+
+	"github.com/pperaltaisern/financing/pkg/financing"
 )
 
 type SellInvoiceHandler struct {

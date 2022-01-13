@@ -2,7 +2,8 @@ package financing
 
 import (
 	"errors"
-	"ledger/internal/esrc"
+
+	"github.com/pperaltaisern/financing/internal/esrc"
 )
 
 type Invoice struct {

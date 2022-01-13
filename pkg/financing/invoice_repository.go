@@ -3,7 +3,8 @@ package financing
 import (
 	"context"
 	"fmt"
-	"ledger/internal/esrc"
+
+	"github.com/pperaltaisern/financing/internal/esrc"
 )
 
 type InvoiceRepository interface {

@@ -2,9 +2,10 @@ package esrctesting
 
 import (
 	"context"
-	"ledger/internal/esrc"
-	"ledger/internal/esrc/relay"
 	"testing"
+
+	"github.com/pperaltaisern/financing/internal/esrc"
+	"github.com/pperaltaisern/financing/internal/esrc/relay"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

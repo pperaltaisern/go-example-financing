@@ -1,8 +1,8 @@
 package grpc
 
 import (
-	"ledger/pkg/financing"
-	"ledger/pkg/grpc/pb"
+	"github.com/pperaltaisern/financing/pkg/financing"
+	"github.com/pperaltaisern/financing/pkg/grpc/pb"
 )
 
 func convertID(id financing.ID) *pb.UUID {

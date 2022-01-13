@@ -2,7 +2,8 @@ package command
 
 import (
 	"context"
-	"ledger/pkg/financing"
+
+	"github.com/pperaltaisern/financing/pkg/financing"
 )
 
 type ReverseFinancingHandler struct {

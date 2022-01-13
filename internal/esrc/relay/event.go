@@ -1,6 +1,6 @@
 package relay
 
-import "ledger/internal/esrc"
+import "github.com/pperaltaisern/financing/internal/esrc"
 
 type RelayEvent struct {
 	AggregateID esrc.ID

@@ -2,7 +2,8 @@ package intevent
 
 import (
 	"context"
-	"ledger/pkg/command"
+
+	"github.com/pperaltaisern/financing/pkg/command"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )

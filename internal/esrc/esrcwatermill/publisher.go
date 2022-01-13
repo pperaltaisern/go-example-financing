@@ -2,7 +2,8 @@ package esrcwatermill
 
 import (
 	"context"
-	"ledger/internal/esrc/relay"
+
+	"github.com/pperaltaisern/financing/internal/esrc/relay"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )

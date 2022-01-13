@@ -2,8 +2,9 @@ package financing
 
 import (
 	"context"
-	"ledger/internal/esrc"
 	"testing"
+
+	"github.com/pperaltaisern/financing/internal/esrc"
 
 	"github.com/stretchr/testify/require"
 )

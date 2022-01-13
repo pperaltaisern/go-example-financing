@@ -2,9 +2,10 @@ package esrcwatermill
 
 import (
 	"encoding/json"
-	"ledger/internal/esrc"
-	"ledger/internal/esrc/relay"
 	"testing"
+
+	"github.com/pperaltaisern/financing/internal/esrc"
+	"github.com/pperaltaisern/financing/internal/esrc/relay"
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"

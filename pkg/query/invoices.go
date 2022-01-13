@@ -1,6 +1,6 @@
 package query
 
-import "ledger/pkg/financing"
+import "github.com/pperaltaisern/financing/pkg/financing"
 
 type InvoiceQueries interface {
 	ByID(financing.ID) Invoice

@@ -2,7 +2,8 @@ package financing
 
 import (
 	"context"
-	"ledger/internal/esrc"
+
+	"github.com/pperaltaisern/financing/internal/esrc"
 )
 
 type IssuerRepository interface {

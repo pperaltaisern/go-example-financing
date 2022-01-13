@@ -3,7 +3,8 @@ package esrcpg
 import (
 	"context"
 	"errors"
-	"ledger/internal/esrc"
+
+	"github.com/pperaltaisern/financing/internal/esrc"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"

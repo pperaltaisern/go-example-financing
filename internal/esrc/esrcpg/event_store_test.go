@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"ledger/internal/esrc/esrctesting"
+	"github.com/pperaltaisern/financing/internal/esrc/esrctesting"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stretchr/testify/require"

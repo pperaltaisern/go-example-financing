@@ -2,7 +2,8 @@ package eventhandler
 
 import (
 	"context"
-	"ledger/pkg/financing"
+
+	"github.com/pperaltaisern/financing/pkg/financing"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )

@@ -1,6 +1,6 @@
 package financing
 
-import "ledger/internal/esrc"
+import "github.com/pperaltaisern/financing/internal/esrc"
 
 type Issuer struct {
 	aggregate esrc.Aggregate

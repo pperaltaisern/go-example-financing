@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"ledger/internal/esrc"
-	"ledger/internal/esrc/relay"
 	"strconv"
 	"strings"
+
+	"github.com/pperaltaisern/financing/internal/esrc"
+	"github.com/pperaltaisern/financing/internal/esrc/relay"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"

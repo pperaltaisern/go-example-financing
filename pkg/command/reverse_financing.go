@@ -1,6 +1,6 @@
 package command
 
-import "ledger/pkg/financing"
+import "github.com/pperaltaisern/financing/pkg/financing"
 
 type ReverseFinancing struct {
 	InvoiceID financing.ID

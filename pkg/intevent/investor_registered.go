@@ -1,7 +1,7 @@
 package intevent
 
 import (
-	"ledger/pkg/financing"
+	"github.com/pperaltaisern/financing/pkg/financing"
 )
 
 type InvestorRegistered struct {

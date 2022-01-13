@@ -2,21 +2,21 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
-	"ledger/internal/esrc/esrcpg"
-	"ledger/internal/esrc/esrcwatermill"
-	"ledger/internal/esrc/relay"
-	"ledger/internal/watermillzap"
-	"ledger/pkg/command"
-	"ledger/pkg/eventhandler"
-	"ledger/pkg/financing"
-	"ledger/pkg/grpc"
-	"ledger/pkg/intevent"
 	"os"
 	"os/signal"
 
-	"github.com/ThreeDotsLabs/watermill-amqp/pkg/amqp"
+	"github.com/pperaltaisern/financing/internal/esrc/esrcpg"
+	"github.com/pperaltaisern/financing/internal/esrc/esrcwatermill"
+	"github.com/pperaltaisern/financing/internal/esrc/relay"
+	"github.com/pperaltaisern/financing/internal/watermillzap"
+	"github.com/pperaltaisern/financing/pkg/command"
+	"github.com/pperaltaisern/financing/pkg/config"
+	"github.com/pperaltaisern/financing/pkg/eventhandler"
+	"github.com/pperaltaisern/financing/pkg/financing"
+	"github.com/pperaltaisern/financing/pkg/grpc"
+	"github.com/pperaltaisern/financing/pkg/intevent"
+
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
@@ -25,12 +25,12 @@ import (
 )
 
 func main() {
-	config, log, err := ParseFlags()
+	log, err := config.LoadLoggerConfig().Build()
 	if err != nil {
 		panic(err)
 	}
 
-	pool, err := pgxpool.Connect(context.Background(), config.Postgres.ConnectionString)
+	pool, err := config.LoadPostgresConfig().Build()
 	if err != nil {
 		log.Fatal("err connecting to Postgres: %v", zap.Error(err))
 	}
@@ -39,16 +39,18 @@ func main() {
 		log.Fatal("err building Postgres repositories: %v", zap.Error(err))
 	}
 
-	cqrsFacade, messageRouter, err := CqrsFacade(config.AMQP, repos, log)
+	cqrsFacade, messageRouter, err := CqrsFacade(repos, log)
 	if err != nil {
 		log.Fatal("err building CQRS facade: %v", zap.Error(err))
 	}
+
+	serverConfig := config.LoadServerConfig()
 	m := Main{
 		log:           log,
 		messageRouter: messageRouter,
 		commandServer: grpc.NewCommandServer(
-			config.CommandServer.Network,
-			config.CommandServer.Address,
+			serverConfig.Network,
+			serverConfig.Port,
 			cqrsFacade.CommandBus(),
 		),
 		relayer: relay.NewRelayer(
@@ -113,24 +115,6 @@ func main() {
 	log.Info("closed gracefully")
 }
 
-func ParseFlags() (c Config, log *zap.Logger, err error) {
-	configFile := flag.String("config", "config_dev.json", "application settings")
-	configDirectory := flag.String("configdir", "./", "config directory")
-	flag.Parse()
-
-	c, err = NewConfig(*configDirectory, *configFile)
-	if err != nil {
-		return
-	}
-
-	log, err = zap.NewDevelopmentConfig().Build()
-	if err != nil {
-		return
-	}
-
-	return
-}
-
 type Repositories struct {
 	Issuers   financing.IssuerRepository
 	Investors financing.InvestorRepository
@@ -147,7 +131,8 @@ func PostgresRepositories(pool *pgxpool.Pool) (Repositories, error) {
 	return repos, nil
 }
 
-func CqrsFacade(config AMQPConfig, repos Repositories, log *zap.Logger) (*cqrs.Facade, *message.Router, error) {
+func CqrsFacade(repos Repositories, log *zap.Logger) (*cqrs.Facade, *message.Router, error) {
+	amqpConfig := config.LoadAMQPConfig()
 	wmlog := watermillzap.NewLogger(log)
 
 	cqrsMarshaler := esrcwatermill.RelayEventMarshaler{
@@ -155,24 +140,23 @@ func CqrsFacade(config AMQPConfig, repos Repositories, log *zap.Logger) (*cqrs.F
 			GenerateName: cqrs.StructName,
 		},
 	}
-	commandsAMQPConfig := amqp.NewDurableQueueConfig(config.Address)
 
-	commandsPublisher, err := amqp.NewPublisher(commandsAMQPConfig, wmlog)
+	commandsPublisher, err := amqpConfig.BuildCommandPublisher(log)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	commandsSubscriber, err := amqp.NewSubscriber(commandsAMQPConfig, wmlog)
+	commandsSubscriber, err := amqpConfig.BuildCommandSubscriber(log)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	eventsPublisher, err := amqp.NewPublisher(amqp.NewDurablePubSubConfig(config.Address, nil), wmlog)
+	eventsPublisher, err := amqpConfig.BuildEventPublisher(log)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	router, err := message.NewRouter(message.RouterConfig{}, wmlog)
+	router, err := message.NewRouter(message.RouterConfig{}, watermillzap.NewLogger(log))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -216,12 +200,7 @@ func CqrsFacade(config AMQPConfig, repos Repositories, log *zap.Logger) (*cqrs.F
 			}
 		},
 		EventsSubscriberConstructor: func(handlerName string) (message.Subscriber, error) {
-			config := amqp.NewDurablePubSubConfig(
-				config.Address,
-				amqp.GenerateQueueNameTopicNameWithSuffix(handlerName),
-			)
-
-			return amqp.NewSubscriber(config, wmlog)
+			return amqpConfig.BuildEventSubscriber(log, handlerName)
 		},
 		EventsPublisher:       eventsPublisher,
 		Router:                router,

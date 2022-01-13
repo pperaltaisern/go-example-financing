@@ -3,10 +3,11 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"ledger/pkg/command"
-	"ledger/pkg/financing"
-	"ledger/pkg/grpc/pb"
 	"net"
+
+	"github.com/pperaltaisern/financing/pkg/command"
+	"github.com/pperaltaisern/financing/pkg/financing"
+	"github.com/pperaltaisern/financing/pkg/grpc/pb"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"google.golang.org/grpc"
