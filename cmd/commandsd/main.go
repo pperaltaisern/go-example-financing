@@ -6,21 +6,12 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/pperaltaisern/financing/internal/esrc/esrcpg"
-	"github.com/pperaltaisern/financing/internal/esrc/esrcwatermill"
-	"github.com/pperaltaisern/financing/internal/esrc/relay"
-	"github.com/pperaltaisern/financing/internal/watermillzap"
 	"github.com/pperaltaisern/financing/pkg/command"
 	"github.com/pperaltaisern/financing/pkg/config"
-	"github.com/pperaltaisern/financing/pkg/eventhandler"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/grpc"
-	"github.com/pperaltaisern/financing/pkg/intevent"
 
-	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
 )
 
@@ -30,16 +21,12 @@ func main() {
 		panic(err)
 	}
 
-	pool, err := config.LoadPostgresConfig().Build()
-	if err != nil {
-		log.Fatal("err connecting to Postgres: %v", zap.Error(err))
-	}
-	repos, err := PostgresRepositories(pool)
+	repos, err := config.LoadPostgresConfig().BuildRepositories()
 	if err != nil {
 		log.Fatal("err building Postgres repositories: %v", zap.Error(err))
 	}
 
-	cqrsFacade, messageRouter, err := CqrsFacade(repos, log)
+	cqrsFacade, messageRouter, err := config.BuildCqrsFacade(log, repos)
 	if err != nil {
 		log.Fatal("err building CQRS facade: %v", zap.Error(err))
 	}
@@ -52,11 +39,6 @@ func main() {
 			serverConfig.Network,
 			serverConfig.Port,
 			cqrsFacade.CommandBus(),
-		),
-		relayer: relay.NewRelayer(
-			esrcpg.NewEventStoreOutbox(pool),
-			esrcwatermill.NewPublisher(cqrsFacade.EventBus()),
-			relay.RelayerWithLogger(log),
 		),
 	}
 
@@ -115,121 +97,18 @@ func main() {
 	log.Info("closed gracefully")
 }
 
-type Repositories struct {
-	Issuers   financing.IssuerRepository
-	Investors financing.InvestorRepository
-	Invoices  financing.InvoiceRepository
-}
-
-func PostgresRepositories(pool *pgxpool.Pool) (Repositories, error) {
-	es := esrcpg.NewEventStore(pool)
-	repos := Repositories{
-		Issuers:   financing.NewIssuerRepository(es),
-		Investors: financing.NewInvestorRepository(es),
-		Invoices:  financing.NewInvoiceRepository(es),
-	}
-	return repos, nil
-}
-
-func CqrsFacade(repos Repositories, log *zap.Logger) (*cqrs.Facade, *message.Router, error) {
-	amqpConfig := config.LoadAMQPConfig()
-	wmlog := watermillzap.NewLogger(log)
-
-	cqrsMarshaler := esrcwatermill.RelayEventMarshaler{
-		CmdMarshaler: cqrs.JSONMarshaler{
-			GenerateName: cqrs.StructName,
-		},
-	}
-
-	commandsPublisher, err := amqpConfig.BuildCommandPublisher(log)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	commandsSubscriber, err := amqpConfig.BuildCommandSubscriber(log)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	eventsPublisher, err := amqpConfig.BuildEventPublisher(log)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	router, err := message.NewRouter(message.RouterConfig{}, watermillzap.NewLogger(log))
-	if err != nil {
-		return nil, nil, err
-	}
-	router.AddMiddleware(middleware.Recoverer)
-
-	facade, err := cqrs.NewFacade(cqrs.FacadeConfig{
-		GenerateCommandsTopic: func(commandName string) string {
-			// we are using queue RabbitMQ config, so we need to have topic per command type
-			return commandName
-		},
-		CommandHandlers: func(cb *cqrs.CommandBus, eb *cqrs.EventBus) []cqrs.CommandHandler {
-			return []cqrs.CommandHandler{
-				command.NewBidOnInvoiceHandler(repos.Investors),
-				command.NewApproveFinancingHandler(repos.Invoices),
-				command.NewReverseFinancingHandler(repos.Invoices),
-				command.NewSellInvoiceHandler(repos.Issuers, repos.Invoices),
-				command.NewCreateInvestorHandler(repos.Investors),
-				command.NewCreateIssuerHandler(repos.Issuers),
-			}
-		},
-		CommandsPublisher: commandsPublisher,
-		CommandsSubscriberConstructor: func(handlerName string) (message.Subscriber, error) {
-			// we can reuse subscriber, because all commands have separated topics
-			return commandsSubscriber, nil
-		},
-		GenerateEventsTopic: func(eventName string) string {
-			// because we are using PubSub RabbitMQ config, we can use one topic for all events
-			return "events"
-
-			// we can also use topic per event type
-			// return eventName
-		},
-		EventHandlers: func(cb *cqrs.CommandBus, eb *cqrs.EventBus) []cqrs.EventHandler {
-			return []cqrs.EventHandler{
-				eventhandler.NewBidOnInvoicePlacedHandler(repos.Invoices),
-				eventhandler.NewBidOnInvoiceRejectedHandler(repos.Investors),
-				eventhandler.NewInvoiceFinancedHandler(repos.Investors),
-				eventhandler.NewInvoiceReversedHandler(repos.Investors),
-				intevent.NewInvestorRegisteredHandler(cb),
-				intevent.NewIssuerRegisteredHandler(cb),
-			}
-		},
-		EventsSubscriberConstructor: func(handlerName string) (message.Subscriber, error) {
-			return amqpConfig.BuildEventSubscriber(log, handlerName)
-		},
-		EventsPublisher:       eventsPublisher,
-		Router:                router,
-		CommandEventMarshaler: cqrsMarshaler,
-		Logger:                wmlog,
-	})
-	if err != nil {
-		router.Close()
-		return nil, nil, err
-	}
-
-	return facade, router, nil
-}
-
 type Main struct {
 	log           *zap.Logger
 	messageRouter *message.Router
-	relayer       *relay.Relayer
 	commandServer *grpc.CommandServer
 }
 
 func (m *Main) Run(errC chan<- error) {
-	go m.relayer.Run()
 	go func() { errC <- m.messageRouter.Run(context.Background()) }()
 	go func() { errC <- m.commandServer.Open() }()
 }
 
 func (m *Main) Close() {
-	m.relayer.Stop()
 	err := m.messageRouter.Close()
 	if err != nil {
 		m.log.Error("err clossing message router %v: err")

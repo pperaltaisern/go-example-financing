@@ -19,6 +19,22 @@ services:
           - postgres
           - rabbitmq
 
+    financing-relayer:
+        build: 
+          context: .
+          dockerfile: ./build/relayerd/Dockerfile
+        restart: always
+        networks:
+          - postgres
+          - rabbitmq_go_net
+        environment:
+          - LOGGER_LEVEL=DEBUG
+          - DB_CONNECTION_STRING=user=postgres password=postgres host=postgres port=5432 dbname=postgres pool_max_conns=10
+          - AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672/
+        depends_on:
+          - postgres
+          - rabbitmq
+
     postgres:
         image: postgres
         restart: always
