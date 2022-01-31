@@ -7,10 +7,8 @@ services:
         restart: always    
         ports:
           - "8080:8080"
-        networks:
-          - postgres
-          - rabbitmq_go_net
         environment:
+          - WAIT=2000
           - SERVER_ADDRESS=0.0.0.0:8080
           - LOGGER_LEVEL=DEBUG
           - DB_CONNECTION_STRING=user=postgres password=postgres host=postgres port=5432 dbname=postgres pool_max_conns=10
@@ -24,11 +22,9 @@ services:
           context: .
           dockerfile: ./build/relayerd/Dockerfile
         restart: always
-        networks:
-          - postgres
-          - rabbitmq_go_net
         environment:
-          - LOGGER_LEVEL=DEBUG
+          - WAIT=2000
+          - LOGGER_LEVEL=INFO
           - DB_CONNECTION_STRING=user=postgres password=postgres host=postgres port=5432 dbname=postgres pool_max_conns=10
           - AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672/
         depends_on:
@@ -46,8 +42,6 @@ services:
           options:
             max-size: 10m
             max-file: "3"
-        networks:
-          - postgres
         ports:
           - '5432:5432'
         volumes:
@@ -63,10 +57,3 @@ services:
       volumes:
           - ./build/volumes/rabbitmq/data/:/var/lib/rabbitmq/
           - ./build/volumes/rabbitmq/log/:/var/log/rabbitmq
-      networks:
-        - rabbitmq_go_net
-
-networks:
-  postgres:
-  rabbitmq_go_net:
-    driver: bridge

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -10,17 +12,26 @@ import (
 
 func init() {
 	viper.AutomaticEnv()
+	viper.AddConfigPath(directoryPath())
+	viper.SetConfigName("config_local")
+	viper.ReadInConfig()
+}
+
+func directoryPath() string {
+	_, fileName, _, _ := runtime.Caller(0)
+	prefixPath := filepath.Dir(fileName)
+	return prefixPath + "/"
 }
 
 type ServerConfig struct {
 	Network string
-	Port    string
+	Address string
 }
 
 func LoadServerConfig() ServerConfig {
 	return ServerConfig{
 		Network: "tcp",
-		Port:    viper.GetString("SERVER_ADDRESS"),
+		Address: viper.GetString("SERVER_ADDRESS"),
 	}
 }
 

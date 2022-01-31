@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/pperaltaisern/financing/internal/esrc"
 	"github.com/pperaltaisern/financing/internal/esrc/esrcpg"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/spf13/viper"
@@ -23,10 +24,10 @@ func (c PostgresConfig) Build() (*pgxpool.Pool, error) {
 	return pgxpool.Connect(context.Background(), c.ConnectionString)
 }
 
-func (c PostgresConfig) BuildRepositories() (Repositories, error) {
+func (c PostgresConfig) BuildRepositories() (Repositories, esrc.EventStore, error) {
 	pool, err := c.Build()
 	if err != nil {
-		return Repositories{}, err
+		return Repositories{}, nil, err
 	}
 
 	es := esrcpg.NewEventStore(pool)
@@ -35,5 +36,5 @@ func (c PostgresConfig) BuildRepositories() (Repositories, error) {
 		Investors: financing.NewInvestorRepository(es),
 		Invoices:  financing.NewInvoiceRepository(es),
 	}
-	return repos, nil
+	return repos, es, nil
 }

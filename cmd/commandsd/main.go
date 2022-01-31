@@ -16,12 +16,15 @@ import (
 )
 
 func main() {
+	// workarround for docker compose not waiting on dependencies correcly
+	config.Wait()
+
 	log, err := config.LoadLoggerConfig().Build()
 	if err != nil {
 		panic(err)
 	}
 
-	repos, err := config.LoadPostgresConfig().BuildRepositories()
+	repos, _, err := config.LoadPostgresConfig().BuildRepositories()
 	if err != nil {
 		log.Fatal("err building Postgres repositories: %v", zap.Error(err))
 	}
@@ -37,7 +40,7 @@ func main() {
 		messageRouter: messageRouter,
 		commandServer: grpc.NewCommandServer(
 			serverConfig.Network,
-			serverConfig.Port,
+			serverConfig.Address,
 			cqrsFacade.CommandBus(),
 		),
 	}
@@ -52,34 +55,6 @@ func main() {
 	m.Run(errC)
 
 	if false {
-		// inv := intevent.InvestorRegistered{
-		// 	ID:      financing.NewID(),
-		// 	Name:    "INVESTOR_1",
-		// 	Balance: 100,
-		// }
-		// err = cqrsFacade.EventBus().Publish(context.Background(), inv)
-		// if err != nil {
-		// 	log.Error("err creating investor", zap.Error(err))
-		// }
-
-		// iss := intevent.IssuerRegistered{
-		// 	ID:   financing.NewID(),
-		// 	Name: "ISSUER_1",
-		// }
-		// err = cqrsFacade.EventBus().Publish(context.Background(), iss)
-		// if err != nil {
-		// 	log.Error("err creating issuer", zap.Error(err))
-		// }
-
-		// cmd := command.SellInvoice{
-		// 	InvoiceID:   financing.NewID(),
-		// 	IssuerID:    financing.NewIDFrom("37bca316-3b73-4caf-8230-6e4f287ab2e1"),
-		// 	AskingPrice: 20,
-		// }
-		// err = cqrsFacade.CommandBus().Send(context.Background(), cmd)
-		// if err != nil {
-		// 	log.Error("err SellInvoice", zap.Error(err))
-		// }
 
 		cmd := command.BidOnInvoice{
 			InvoiceID:  financing.NewIDFromString("89a332f9-0cd7-4a43-8770-6bf5027ef1e7"),
@@ -92,6 +67,7 @@ func main() {
 		}
 	}
 
+	log.Info("ready")
 	log.Info("terminated", zap.Error(<-errC))
 	m.Close()
 	log.Info("closed gracefully")

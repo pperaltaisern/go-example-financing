@@ -13,6 +13,9 @@ import (
 )
 
 func main() {
+	// workarround for docker compose not waiting on dependencies correcly
+	config.Wait()
+
 	log, err := config.LoadLoggerConfig().Build()
 	if err != nil {
 		panic(err)
@@ -43,6 +46,7 @@ func main() {
 
 	go relayer.Run()
 
+	log.Info("ready")
 	log.Info("terminated", zap.Error(<-errC))
 	relayer.Stop()
 	log.Info("closed gracefully")

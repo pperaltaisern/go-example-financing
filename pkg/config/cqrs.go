@@ -4,6 +4,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
+	"github.com/pperaltaisern/financing/internal/esrc"
 	"github.com/pperaltaisern/financing/internal/esrc/esrcwatermill"
 	"github.com/pperaltaisern/financing/internal/watermillzap"
 	"github.com/pperaltaisern/financing/pkg/command"
@@ -42,6 +43,7 @@ func BuildCqrsFacade(log *zap.Logger, repos Repositories) (*cqrs.Facade, *messag
 		return nil, nil, err
 	}
 	router.AddMiddleware(middleware.Recoverer)
+	router.AddMiddleware(errorHandlingMiddleware(log))
 
 	facade, err := cqrs.NewFacade(cqrs.FacadeConfig{
 		GenerateCommandsTopic: func(commandName string) string {
@@ -115,4 +117,24 @@ func buildCommandsEventMarshaler() cqrs.CommandEventMarshaler {
 func generateEventsTopic(eventName string) string {
 	// because we are using PubSub RabbitMQ config, we can use one topic for all events
 	return "events"
+}
+
+func errorHandlingMiddleware(log *zap.Logger) message.HandlerMiddleware {
+	return func(h message.HandlerFunc) message.HandlerFunc {
+		return func(msg *message.Message) ([]*message.Message, error) {
+			events, err := h(msg)
+			if err != nil {
+				switch err {
+				case esrc.ErrOptimisticConcurrency:
+					log.Warn("err handling message, retrying", zap.Error(err))
+					return events, err
+				default:
+					log.Info("err handling message, not retrying", zap.Error(err))
+					return events, nil
+				}
+			}
+
+			return events, nil
+		}
+	}
 }
