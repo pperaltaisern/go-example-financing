@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/pperaltaisern/financing/internal/esrc"
+	"github.com/pperaltaisern/financing/internal/esrc/esrcwatermill"
 	"github.com/pperaltaisern/financing/pkg/config"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/grpc/pb"
-	"github.com/pperaltaisern/financing/pkg/intevent"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
@@ -20,18 +21,21 @@ import (
 type Suite struct {
 	suite.Suite
 
-	conn       *grpc.ClientConn
-	commands   pb.CommandsClient
-	eventStore esrc.EventStore
-	eventBus   *cqrs.EventBus
-	waitTime   time.Duration
-
-	investorID financing.ID
-	issuerID   financing.ID
-	invoiceID  financing.ID
+	conn               *grpc.ClientConn
+	commands           pb.CommandsClient
+	eventStore         esrc.EventStore
+	eventBus           *cqrs.EventBus
+	subscriberMessageC <-chan *message.Message
+	waitTime           time.Duration
+	eventMarshaler     cqrs.CommandEventMarshaler
 }
 
-func (s *Suite) SetupTest() {
+func TestFeatures(t *testing.T) {
+	s := new(Suite)
+	suite.Run(t, s)
+}
+
+func (s *Suite) SetupSuite() {
 	s.waitTime = time.Second
 
 	log, err := config.LoadLoggerConfig().Build()
@@ -59,74 +63,69 @@ func (s *Suite) SetupTest() {
 	}
 	s.eventBus = facade.EventBus()
 
-	s.investorID = financing.NewID()
-	s.issuerID = financing.NewIDFromString("37bca316-3b73-4caf-8230-6e4f287ab2e1")
-	s.investorID = financing.NewID()
+	const testEventSubscriberTopic = "test_handler"
+	eventSubscriber, err := config.LoadAMQPConfig().BuildEventSubscriber(log, testEventSubscriberTopic)
+	if err != nil {
+		log.Fatal("err building test subscriber", zap.Error(err))
+	}
+	s.subscriberMessageC, err = eventSubscriber.Subscribe(context.Background(), "events")
+	if err != nil {
+		log.Fatal("err subscribing to test subscriber", zap.Error(err))
+	}
+
+	s.eventMarshaler = esrcwatermill.RelayEventMarshaler{
+		CmdMarshaler: cqrs.JSONMarshaler{},
+	}
 }
 
-func (s *Suite) TearDownTest() {
+func (s *Suite) TearDownSuite() {
 	s.conn.Close()
 }
 
-func (s *Suite) TestInvestorRegistered() {
-	t := s.T()
-
-	e := intevent.InvestorRegistered{
-		ID:      s.investorID,
-		Name:    "INVESTOR_1",
-		Balance: 100,
-	}
-	s.publishIntegrationEvent(t, s.investorID, e)
+type EventAssertion struct {
+	Expected esrc.Event
+	// Actual is an empty event that is going to be used to unmarshal the message
+	Actual esrc.Event
 }
 
-func (s *Suite) TestIssuerRegistered() {
-	t := s.T()
-
-	e := intevent.IssuerRegistered{
-		ID:   s.issuerID,
-		Name: "ISSUER_1",
-	}
-	s.publishIntegrationEvent(t, s.issuerID, e)
+var integrationEvents = map[string]struct{}{
+	"InvestorRegistered": {},
+	"IssuerRegistered":   {},
 }
 
-func (s *Suite) TestSellInvoice() {
-	t := s.T()
+// expectEvents asserts that messages received from the subscribed are the expected, the order is important
+func (s *Suite) expectEvents(t *testing.T, events ...EventAssertion) {
+	for _, e := range events {
+		var m *message.Message
+		for {
+			m = s.waitForMessage(t)
+			eventName := m.Metadata.Get("name")
+			// integrationEvents should come from another queue but for simplicity we put them in the same and ignore them when asserting
+			if _, ok := integrationEvents[eventName]; !ok {
+				break
+			}
+		}
+		require.Equal(t, e.Actual.EventName(), m.Metadata.Get("name"))
 
-	cmd := &pb.SellInvoiceCommand{
-		IssuerId: &pb.UUID{
-			Value: s.issuerID.String(),
-		},
-		AskingPrice: &pb.Money{
-			Amount: 20,
-		},
+		err := s.eventMarshaler.Unmarshal(m, e.Actual)
+		require.NoError(t, err)
+		require.Equal(t, e.Expected, e.Actual)
 	}
-
-	id, err := s.commands.SellInvoice(context.Background(), cmd)
-	require.NoError(t, err)
-
-	s.assertContains(t, s.invoiceID)
-
-	s.invoiceID = financing.NewIDFromString(id.Value)
 }
 
-// func (s *Suite) TestSellInvoice_NotExistingIssuer() {
-// 	t := s.T()
-
-// 	cmd := &pb.SellInvoiceCommand{
-// 		IssuerId: &pb.UUID{
-// 			// this issuer won't be found
-// 			Value: financing.NewID().String(),
-// 		},
-// 		AskingPrice: &pb.Money{
-// 			Amount: 20,
-// 		},
-// 	}
-
-// 	id, err := s.commands.SellInvoice(context.Background(), cmd)
-// 	require.NoError(t, err)
-
-// 	s.assertNotContains(t, financing.NewIDFromString(id.Value))
-// }
+func (s *Suite) waitForMessage(t *testing.T) *message.Message {
+	for i := 0; i < 2; i++ {
+		select {
+		case m := <-s.subscriberMessageC:
+			m.Ack()
+			return m
+		default:
+			time.Sleep(s.waitTime)
+		}
+	}
+	require.FailNow(t, "message not received")
+	return nil
+}
 
 // func (s *Suite) TestBidOnInvoice() {
 // 	t := s.T()
@@ -149,11 +148,16 @@ func (s *Suite) TestSellInvoice() {
 // 	s.eventBus()
 // }
 
-func (s *Suite) publishIntegrationEvent(t *testing.T, id financing.ID, event interface{}) {
+func (s *Suite) publishIntegrationEventAndAssertCreatedInEventSource(t *testing.T, id financing.ID, event interface{}) {
+	s.publishEvent(t, event)
+	s.assertContains(t, id)
+}
+
+func (s *Suite) publishEvent(t *testing.T, event interface{}) {
 	err := s.eventBus.Publish(context.Background(), event)
 	require.NoError(t, err)
-
-	s.assertContains(t, id)
+	// wait the event to be processed
+	time.Sleep(s.waitTime)
 }
 
 func (s *Suite) assertContains(t *testing.T, id financing.ID) {
@@ -165,13 +169,9 @@ func (s *Suite) assertNotContains(t *testing.T, id financing.ID) {
 }
 
 func (s *Suite) assertContainsBool(t *testing.T, id financing.ID, expected bool) {
+	// wait the event to be processed
 	time.Sleep(s.waitTime)
-
 	f, err := s.eventStore.Contains(context.Background(), id)
 	require.NoError(t, err)
 	require.Equal(t, expected, f)
-}
-
-func TestFeatures(t *testing.T) {
-	suite.Run(t, new(Suite))
 }

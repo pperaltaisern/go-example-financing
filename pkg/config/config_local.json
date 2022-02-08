@@ -2,7 +2,7 @@
     "UNIT_TEST_VALUE": 10,
     "WAIT" : "2000",
     "SERVER_ADDRESS" : "0.0.0.0:8080",
-    "LOGGER_LEVEL" : "DEBUG",
+    "LOGGER_LEVEL" : "WARNING",
     "DB_CONNECTION_STRING" : "user=postgres password=postgres host=localhost port=5432 dbname=postgres pool_max_conns=10",
     "AMQP_ADDRESS" : "amqp://guest:guest@localhost:5672/"
 }
