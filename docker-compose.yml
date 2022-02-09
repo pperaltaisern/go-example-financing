@@ -10,7 +10,7 @@ services:
         environment:
           - WAIT=2000
           - SERVER_ADDRESS=0.0.0.0:8080
-          - LOGGER_LEVEL=DEBUG
+          - LOGGER_LEVEL=INFO
           - DB_CONNECTION_STRING=user=postgres password=postgres host=postgres port=5432 dbname=postgres pool_max_conns=10
           - AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672/
         depends_on:

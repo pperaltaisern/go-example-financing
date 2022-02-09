@@ -12,18 +12,7 @@ func (s *Suite) TestIssuerRegistered() {
 
 	t.Run("GIVEN a IssuerRegistered integration event WHEN we process it THEN we create the issuer", func(t *testing.T) {
 		issuerID := financing.NewID()
-		integrationEvent := intevent.IssuerRegistered{
-			ID:   issuerID,
-			Name: "ISSUER_1",
-		}
-		eventAssertion := EventAssertion{
-			Expected: financing.NewIssuerCreatedEvent(issuerID),
-			Actual:   &financing.IssuerCreatedEvent{},
-		}
-
-		s.publishIntegrationEventAndAssertCreatedInEventSource(t, issuerID, integrationEvent)
-
-		s.expectEvents(t, eventAssertion)
+		s.RegisterIssuer(issuerID)
 	})
 }
 

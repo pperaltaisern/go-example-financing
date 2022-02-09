@@ -25,13 +25,13 @@ func (h *BidOnInvoiceRejectedHandler) HandlerName() string {
 }
 
 func (h *BidOnInvoiceRejectedHandler) NewEvent() interface{} {
-	return &financing.BidOnInvoicePlacedEvent{}
+	return &financing.BidOnInvoiceRejectedEvent{}
 }
 
 func (h *BidOnInvoiceRejectedHandler) Handle(ctx context.Context, e interface{}) error {
-	event := e.(*financing.BidOnInvoicePlacedEvent)
+	event := e.(*financing.BidOnInvoiceRejectedEvent)
 
-	return h.investors.Update(ctx, event.InvestorID, func(investor *financing.Investor) error {
-		return investor.ReleaseFunds(event.BidAmount)
+	return h.investors.Update(ctx, event.Bid.InvestorID, func(investor *financing.Investor) error {
+		return investor.ReleaseFunds(event.Bid.Amount)
 	})
 }

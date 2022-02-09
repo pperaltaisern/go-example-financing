@@ -36,7 +36,7 @@ func (h *InvoiceFinancedHandler) Handle(ctx context.Context, e interface{}) erro
 		return nil
 	}
 
-	return h.investors.Update(ctx, event.Bid.IvestorID, func(investor *financing.Investor) error {
+	return h.investors.Update(ctx, event.Bid.InvestorID, func(investor *financing.Investor) error {
 		return investor.ReleaseFunds(unplacedBid)
 	})
 }

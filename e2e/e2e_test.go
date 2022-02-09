@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -79,6 +80,7 @@ func (s *Suite) SetupSuite() {
 }
 
 func (s *Suite) TearDownSuite() {
+	s.AssertNoMoreMessages(s.T())
 	s.conn.Close()
 }
 
@@ -114,7 +116,7 @@ func (s *Suite) expectEvents(t *testing.T, events ...EventAssertion) {
 }
 
 func (s *Suite) waitForMessage(t *testing.T) *message.Message {
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 3; i++ {
 		select {
 		case m := <-s.subscriberMessageC:
 			m.Ack()
@@ -127,26 +129,24 @@ func (s *Suite) waitForMessage(t *testing.T) *message.Message {
 	return nil
 }
 
-// func (s *Suite) TestBidOnInvoice() {
-// 	t := s.T()
-
-// 	cmd := &pb.BidOnInvoiceCommand{
-// 		InvestorId: &pb.UUID{
-// 			Value: s.investorID.String(),
-// 		},
-// 		InvoiceId: &pb.UUID{
-// 			Value: s.invoiceID.String(),
-// 		},
-// 		Bid: &pb.Money{
-// 			Amount: 30,
-// 		},
-// 	}
-
-// 	_, err := s.commands.BidOnInvoice(context.Background(), cmd)
-// 	require.NoError(t, err)
-
-// 	s.eventBus()
-// }
+func (s *Suite) AssertNoMoreMessages(t *testing.T) {
+	time.Sleep(s.waitTime)
+	var messages []*message.Message
+Loop:
+	for {
+		select {
+		case m := <-s.subscriberMessageC:
+			m.Ack()
+			messages = append(messages, m)
+		default:
+			break Loop
+		}
+	}
+	if len(messages) > 0 {
+		b, err := json.Marshal(messages)
+		require.FailNowf(t, "shouldn't be more messages in queue after all tests are finished, found:", string(b), err)
+	}
+}
 
 func (s *Suite) publishIntegrationEventAndAssertCreatedInEventSource(t *testing.T, id financing.ID, event interface{}) {
 	s.publishEvent(t, event)

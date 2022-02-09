@@ -66,7 +66,7 @@ func (s *CommandServer) SellInvoice(ctx context.Context, pbcmd *pb.SellInvoiceCo
 	if err != nil {
 		return nil, err
 	}
-	return convertID(invoiceID), nil
+	return ConvertID(invoiceID), nil
 }
 
 func (s *CommandServer) BidOnInvoice(ctx context.Context, pbcmd *pb.BidOnInvoiceCommand) (*emptypb.Empty, error) {
