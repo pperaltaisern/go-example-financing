@@ -1,8 +1,6 @@
 package financing
 
 import (
-	"errors"
-
 	"github.com/pperaltaisern/financing/internal/esrc"
 )
 
@@ -39,8 +37,6 @@ func newInvoiceFromEvents(events []esrc.Event) *Invoice {
 	inv.aggregate = esrc.NewAggregateFromEvents(events, inv.onEvent)
 	return inv
 }
-
-var ErrBidAmountIsLowerThanTheAskingPrice = errors.New("bid amount is lower than the invoice's asking price")
 
 func (inv *Invoice) ProcessBid(bid Bid) {
 	if inv.status != invoiceStatusAvailable || !inv.isMatchingBid(bid) {
@@ -84,7 +80,7 @@ func (inv *Invoice) ApproveFinancing() {
 		return
 	}
 
-	e := NewInvoiceApprovedEvent(inv.id, *inv.winningBid)
+	e := NewInvoiceApprovedEvent(inv.id, inv.askingPrice, *inv.winningBid)
 	inv.aggregate.Raise(e)
 }
 

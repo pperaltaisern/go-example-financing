@@ -22,7 +22,7 @@ func (s *Suite) RegisterInvestor(id financing.ID, balance financing.Money) {
 	integrationEvent := intevent.InvestorRegistered{
 		ID:      id,
 		Name:    "INVESTOR_1",
-		Balance: 100,
+		Balance: balance,
 	}
 	eventAssertions := []EventAssertion{
 		{

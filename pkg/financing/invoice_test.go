@@ -97,7 +97,7 @@ func TestInvoice_ApproveFinancing(t *testing.T) {
 	inv := testNewFinancedInvoice(100)
 	inv.ApproveFinancing()
 
-	e := NewInvoiceApprovedEvent(inv.id, *inv.winningBid)
+	e := NewInvoiceApprovedEvent(inv.id, inv.winningBid.Amount, *inv.winningBid)
 	require.Len(t, inv.aggregate.Events(), 3)
 	require.Equal(t, e, inv.aggregate.Events()[2])
 	require.Equal(t, 0, inv.aggregate.Version())

@@ -2,12 +2,14 @@ package financing
 
 type InvoiceApprovedEvent struct {
 	InvoiceID ID `json:"-"`
+	SoldPrice Money
 	Bid       Bid
 }
 
-func NewInvoiceApprovedEvent(invoiceID ID, bid Bid) *InvoiceApprovedEvent {
+func NewInvoiceApprovedEvent(invoiceID ID, soldPrice Money, bid Bid) *InvoiceApprovedEvent {
 	return &InvoiceApprovedEvent{
 		InvoiceID: invoiceID,
+		SoldPrice: soldPrice,
 		Bid:       bid,
 	}
 }

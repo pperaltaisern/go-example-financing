@@ -79,8 +79,11 @@ func (s *Suite) SetupSuite() {
 	}
 }
 
-func (s *Suite) TearDownSuite() {
+func (s *Suite) TearDownTest() {
 	s.AssertNoMoreMessages(s.T())
+}
+
+func (s *Suite) TearDownSuite() {
 	s.conn.Close()
 }
 
