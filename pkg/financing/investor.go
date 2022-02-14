@@ -48,16 +48,28 @@ func (inv *Investor) BidOnInvoice(invoiceID ID, amount Money) error {
 	return nil
 }
 
-var ErrNotEnoughReservedFundsToRelease = errors.New("there isn't enough balance reserved to release")
+var ErrNotEnoughReservedFunds = errors.New("there isn't enough balance reserved")
 
 func (inv *Investor) ReleaseFunds(amount Money) error {
 	if amount <= 0 {
 		return nil
 	}
 	if !inv.hasEnoughReservedFunds(amount) {
-		return ErrNotEnoughReservedFundsToRelease
+		return ErrNotEnoughReservedFunds
 	}
 	e := NewInvestorFundsReleasedEvent(inv.id, amount)
+	inv.aggregate.Raise(e)
+	return nil
+}
+
+func (inv *Investor) CommitFunds(amount Money) error {
+	if amount <= 0 {
+		return nil
+	}
+	if !inv.hasEnoughReservedFunds(amount) {
+		return ErrNotEnoughReservedFunds
+	}
+	e := NewInvestorFundsCommittedEvent(inv.id, amount)
 	inv.aggregate.Raise(e)
 	return nil
 }
@@ -84,6 +96,10 @@ func (inv *Investor) releaseFunds(amount Money) {
 	inv.reserved -= amount
 }
 
+func (inv *Investor) commitFunds(amount Money) {
+	inv.reserved -= amount
+}
+
 func (inv *Investor) onEvent(event esrc.Event) {
 	switch e := event.(type) {
 	case *InvestorCreatedEvent:
@@ -94,5 +110,7 @@ func (inv *Investor) onEvent(event esrc.Event) {
 		inv.reserveFunds(e.BidAmount)
 	case *InvestorFundsReleasedEvent:
 		inv.releaseFunds(e.Amount)
+	case *InvestorFundsCommittedEvent:
+		inv.commitFunds(e.Amount)
 	}
 }

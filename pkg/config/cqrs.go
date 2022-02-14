@@ -72,6 +72,7 @@ func BuildCqrsFacade(log *zap.Logger, repos Repositories) (*cqrs.Facade, *messag
 				eventhandler.NewBidOnInvoiceRejectedHandler(repos.Investors),
 				eventhandler.NewInvoiceFinancedHandler(repos.Investors),
 				eventhandler.NewInvoiceReversedHandler(repos.Investors),
+				eventhandler.NewInvoiceApprovedHandler(repos.Investors),
 				intevent.NewInvestorRegisteredHandler(cb),
 				intevent.NewIssuerRegisteredHandler(cb),
 			}

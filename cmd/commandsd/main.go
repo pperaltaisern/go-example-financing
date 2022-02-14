@@ -6,11 +6,12 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/pperaltaisern/financing/pkg/command"
 	"github.com/pperaltaisern/financing/pkg/config"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/grpc"
+	"github.com/pperaltaisern/financing/pkg/intevent"
 
+	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"go.uber.org/zap"
 )
@@ -54,18 +55,7 @@ func main() {
 
 	m.Run(errC)
 
-	if false {
-
-		cmd := command.BidOnInvoice{
-			InvoiceID:  financing.NewIDFromString("89a332f9-0cd7-4a43-8770-6bf5027ef1e7"),
-			InvestorID: financing.NewIDFromString("ca8573f2-203a-4d9e-bd2c-621edf7b9eed"),
-			BidAmount:  35,
-		}
-		err = cqrsFacade.CommandBus().Send(context.Background(), cmd)
-		if err != nil {
-			log.Error("err SellInvoice", zap.Error(err))
-		}
-	}
+	PublishTestIntegrationEvents(cqrsFacade.EventBus())
 
 	log.Info("ready")
 	log.Info("terminated", zap.Error(<-errC))
@@ -91,4 +81,23 @@ func (m *Main) Close() {
 	}
 	m.commandServer.Close()
 	m.log.Sync()
+}
+
+func PublishTestIntegrationEvents(bus *cqrs.EventBus) {
+	for i := 0; i < 5; i++ {
+		issuerCreated := intevent.IssuerRegistered{
+			ID:   financing.NewID(),
+			Name: fmt.Sprintf("ISSUER_%v", i+1),
+		}
+		bus.Publish(context.Background(), issuerCreated)
+	}
+
+	for i := 0; i < 5; i++ {
+		investorCreated := intevent.InvestorRegistered{
+			ID:      financing.NewID(),
+			Name:    fmt.Sprintf("INVESTOR_%v", i+1),
+			Balance: financing.Money(100),
+		}
+		bus.Publish(context.Background(), investorCreated)
+	}
 }

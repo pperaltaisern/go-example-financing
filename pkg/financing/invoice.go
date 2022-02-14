@@ -71,7 +71,7 @@ func (inv *Invoice) ReverseFinancing() {
 		return
 	}
 
-	e := NewInvoiceReversedEvent(inv.id, *inv.winningBid)
+	e := NewInvoiceReversedEvent(inv.id, inv.askingPrice, *inv.winningBid)
 	inv.aggregate.Raise(e)
 }
 

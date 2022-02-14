@@ -32,6 +32,6 @@ func (h *InvoiceReversedHandler) Handle(ctx context.Context, e interface{}) erro
 	event := e.(*financing.InvoiceReversedEvent)
 
 	return h.investors.Update(ctx, event.Bid.InvestorID, func(investor *financing.Investor) error {
-		return investor.ReleaseFunds(event.Bid.Amount)
+		return investor.ReleaseFunds(event.SoldPrice)
 	})
 }

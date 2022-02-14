@@ -108,7 +108,7 @@ func TestInvoice_ReverseFinancing(t *testing.T) {
 	inv.ReverseFinancing()
 	require.Equal(t, invoiceStatusReversed, inv.status)
 
-	e := NewInvoiceReversedEvent(inv.id, *inv.winningBid)
+	e := NewInvoiceReversedEvent(inv.id, inv.askingPrice, *inv.winningBid)
 	require.Len(t, inv.aggregate.Events(), 3)
 	require.Equal(t, e, inv.aggregate.Events()[2])
 	require.Equal(t, 0, inv.aggregate.Version())

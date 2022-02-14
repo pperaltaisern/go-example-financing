@@ -185,7 +185,76 @@ func TestInvestor_ReleaseFunds_HasNotEnoughFundsReserved(t *testing.T) {
 	inv := testNewInvestorWithBalanceAndReserved(t, initialFunds, initialFunds)
 
 	err := inv.ReleaseFunds(initialFunds + 1)
-	require.Equal(t, ErrNotEnoughReservedFundsToRelease, err)
+	require.Equal(t, ErrNotEnoughReservedFunds, err)
+
+	require.Equal(t, Money(0), inv.balance)
+	require.Equal(t, initialFunds, inv.reserved)
+
+	require.Len(t, inv.aggregate.Events(), 3)
+	require.Equal(t, 0, inv.aggregate.Version())
+}
+
+func TestInvestor_CommitFunds(t *testing.T) {
+	initialFunds := Money(100)
+
+	tests := map[string]struct {
+		amountCommitted Money
+	}{
+		"entire reserved money":   {amountCommitted: initialFunds},
+		"half the reserved money": {amountCommitted: initialFunds / 2},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			inv := testNewInvestorWithBalanceAndReserved(t, initialFunds, initialFunds)
+
+			err := inv.CommitFunds(tc.amountCommitted)
+			require.NoError(t, err)
+
+			require.Equal(t, Money(0), inv.balance)
+			require.Equal(t, initialFunds-tc.amountCommitted, inv.reserved)
+
+			e := NewInvestorFundsCommittedEvent(inv.id, tc.amountCommitted)
+			require.Equal(t, e, inv.aggregate.Events()[3])
+			require.Equal(t, 0, inv.aggregate.Version())
+		})
+	}
+}
+
+func TestInvesto_CommitFunds_Zero(t *testing.T) {
+	initialFunds := Money(100)
+	inv := testNewInvestorWithBalanceAndReserved(t, initialFunds, initialFunds)
+
+	err := inv.CommitFunds(0)
+	require.NoError(t, err)
+
+	require.Equal(t, Money(0), inv.balance)
+	require.Equal(t, initialFunds, inv.reserved)
+
+	require.Len(t, inv.aggregate.Events(), 3)
+	require.Equal(t, 0, inv.aggregate.Version())
+}
+
+func TestInvestor_CommitFunds_Negative(t *testing.T) {
+	initialFunds := Money(100)
+	inv := testNewInvestorWithBalanceAndReserved(t, initialFunds, initialFunds)
+
+	err := inv.CommitFunds(-100)
+	require.NoError(t, err)
+
+	require.Equal(t, Money(0), inv.balance)
+	require.Equal(t, initialFunds, inv.reserved)
+
+	require.Len(t, inv.aggregate.Events(), 3)
+	require.Equal(t, 0, inv.aggregate.Version())
+}
+
+func TestInvestor_CommmitFunds_HasNotEnoughFundsReserved(t *testing.T) {
+	initialFunds := Money(100)
+	inv := testNewInvestorWithBalanceAndReserved(t, initialFunds, initialFunds)
+
+	err := inv.CommitFunds(initialFunds + 1)
+	require.Equal(t, ErrNotEnoughReservedFunds, err)
 
 	require.Equal(t, Money(0), inv.balance)
 	require.Equal(t, initialFunds, inv.reserved)

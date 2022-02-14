@@ -37,6 +37,8 @@ func (investorEventsFactory) CreateEmptyEvent(name string) (esrc.Event, error) {
 		e = &BidOnInvoicePlacedEvent{}
 	case "InvestorFundsReleasedEvent":
 		e = &InvestorFundsReleasedEvent{}
+	case "InvestorFundsCommittedEvent":
+		e = &InvestorFundsCommittedEvent{}
 	default:
 		return nil, fmt.Errorf("unkown event name: %s", name)
 	}

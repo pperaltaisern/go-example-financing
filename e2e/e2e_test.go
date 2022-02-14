@@ -77,6 +77,8 @@ func (s *Suite) SetupSuite() {
 	s.eventMarshaler = esrcwatermill.RelayEventMarshaler{
 		CmdMarshaler: cqrs.JSONMarshaler{},
 	}
+
+	s.purgeMessageQueue()
 }
 
 func (s *Suite) TearDownTest() {
@@ -102,6 +104,7 @@ var integrationEvents = map[string]struct{}{
 func (s *Suite) expectEvents(t *testing.T, events ...EventAssertion) {
 	for _, e := range events {
 		var m *message.Message
+		t.Logf("expecting event '%s'", e.Actual.EventName())
 		for {
 			m = s.waitForMessage(t)
 			eventName := m.Metadata.Get("name")
@@ -148,6 +151,18 @@ Loop:
 	if len(messages) > 0 {
 		b, err := json.Marshal(messages)
 		require.FailNowf(t, "shouldn't be more messages in queue after all tests are finished, found:", string(b), err)
+	}
+}
+
+func (s *Suite) purgeMessageQueue() {
+	for {
+		select {
+		case m := <-s.subscriberMessageC:
+			m.Ack()
+			time.Sleep(s.waitTime)
+		default:
+			return
+		}
 	}
 }
 
