@@ -17,12 +17,6 @@ func BuildCqrsFacade(log *zap.Logger, repos Repositories) (*cqrs.Facade, *messag
 	amqpConfig := LoadAMQPConfig()
 	wmlog := watermillzap.NewLogger(log)
 
-	cqrsMarshaler := esrcwatermill.RelayEventMarshaler{
-		CmdMarshaler: cqrs.JSONMarshaler{
-			GenerateName: cqrs.StructName,
-		},
-	}
-
 	commandsPublisher, err := amqpConfig.BuildCommandPublisher(log)
 	if err != nil {
 		return nil, nil, err
@@ -82,7 +76,7 @@ func BuildCqrsFacade(log *zap.Logger, repos Repositories) (*cqrs.Facade, *messag
 		},
 		EventsPublisher:       eventsPublisher,
 		Router:                router,
-		CommandEventMarshaler: cqrsMarshaler,
+		CommandEventMarshaler: CommandEventMarshaler,
 		Logger:                wmlog,
 	})
 	if err != nil {
@@ -93,31 +87,15 @@ func BuildCqrsFacade(log *zap.Logger, repos Repositories) (*cqrs.Facade, *messag
 	return facade, router, nil
 }
 
-func BuildEventBus(log *zap.Logger) (*cqrs.EventBus, error) {
-	amqpConfig := LoadAMQPConfig()
-
-	publisher, err := amqpConfig.BuildEventPublisher(log)
-	if err != nil {
-		return nil, err
-	}
-
-	return cqrs.NewEventBus(
-		publisher,
-		generateEventsTopic,
-		buildCommandsEventMarshaler())
-}
-
-func buildCommandsEventMarshaler() cqrs.CommandEventMarshaler {
-	return esrcwatermill.RelayEventMarshaler{
-		CmdMarshaler: cqrs.JSONMarshaler{
-			GenerateName: cqrs.StructName,
-		},
-	}
-}
-
 func generateEventsTopic(eventName string) string {
 	// because we are using PubSub RabbitMQ config, we can use one topic for all events
 	return "events"
+}
+
+var CommandEventMarshaler = esrcwatermill.RelayEventMarshaler{
+	CmdMarshaler: cqrs.JSONMarshaler{
+		GenerateName: cqrs.StructName,
+	},
 }
 
 func errorHandlingMiddleware(log *zap.Logger) message.HandlerMiddleware {

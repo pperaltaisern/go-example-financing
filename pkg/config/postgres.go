@@ -8,6 +8,8 @@ import (
 	"github.com/pperaltaisern/financing/internal/esrc/esrcpg"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/spf13/viper"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type PostgresConfig struct {
@@ -22,6 +24,10 @@ func LoadPostgresConfig() PostgresConfig {
 
 func (c PostgresConfig) Build() (*pgxpool.Pool, error) {
 	return pgxpool.Connect(context.Background(), c.ConnectionString)
+}
+
+func (c PostgresConfig) BuildGORM() (*gorm.DB, error) {
+	return gorm.Open(postgres.Open(c.ConnectionString), &gorm.Config{})
 }
 
 func (c PostgresConfig) BuildRepositories() (Repositories, esrc.EventStore, error) {

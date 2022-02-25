@@ -26,7 +26,7 @@ func main() {
 		log.Fatal("err connecting to Postgres: %v", zap.Error(err))
 	}
 
-	bus, err := config.BuildEventBus(log)
+	bus, err := config.LoadAMQPConfig().BuildEventBus(log)
 	if err != nil {
 		log.Fatal("err building event bus: %v", zap.Error(err))
 	}

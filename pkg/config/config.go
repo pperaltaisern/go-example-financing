@@ -28,10 +28,17 @@ type ServerConfig struct {
 	Address string
 }
 
-func LoadServerConfig() ServerConfig {
+func LoadCommandServerConfig() ServerConfig {
 	return ServerConfig{
 		Network: "tcp",
-		Address: viper.GetString("SERVER_ADDRESS"),
+		Address: viper.GetString("COMMAND_SERVER_ADDRESS"),
+	}
+}
+
+func LoadQueryServerConfig() ServerConfig {
+	return ServerConfig{
+		Network: "tcp",
+		Address: viper.GetString("QUERY_SERVER_ADDRESS"),
 	}
 }
 

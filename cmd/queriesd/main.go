@@ -12,7 +12,6 @@ import (
 	"github.com/pperaltaisern/financing/pkg/intevent"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
-	"github.com/ThreeDotsLabs/watermill/message"
 	"go.uber.org/zap"
 )
 
@@ -25,21 +24,10 @@ func main() {
 		panic(err)
 	}
 
-	repos, _, err := config.LoadPostgresConfig().BuildRepositories()
-	if err != nil {
-		log.Fatal("err building Postgres repositories: %v", zap.Error(err))
-	}
-
-	cqrsFacade, messageRouter, err := config.BuildCqrsFacade(log, repos)
-	if err != nil {
-		log.Fatal("err building CQRS facade: %v", zap.Error(err))
-	}
-
-	serverConfig := config.LoadCommandServerConfig()
+	serverConfig := config.LoadQueryServerConfig()
 	m := Main{
-		log:           log,
-		messageRouter: messageRouter,
-		commandServer: grpc.NewCommandServer(
+		log: log,
+		queryServer: grpc.NewQueryServer(
 			serverConfig.Network,
 			serverConfig.Address,
 			cqrsFacade.CommandBus(),
@@ -64,9 +52,8 @@ func main() {
 }
 
 type Main struct {
-	log           *zap.Logger
-	messageRouter *message.Router
-	commandServer *grpc.CommandServer
+	log         *zap.Logger
+	queryServer *grpc.QueryServer
 }
 
 func (m *Main) Run(errC chan<- error) {

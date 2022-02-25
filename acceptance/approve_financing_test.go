@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func (s *Suite) TestApproveFinancing() {
+func (s *CommandsSuite) TestApproveFinancing() {
 	t := s.T()
 
 	t.Run(`

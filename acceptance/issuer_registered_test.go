@@ -7,7 +7,7 @@ import (
 	"github.com/pperaltaisern/financing/pkg/intevent"
 )
 
-func (s *Suite) TestIssuerRegistered() {
+func (s *CommandsSuite) TestIssuerRegistered() {
 	t := s.T()
 
 	t.Run("GIVEN a IssuerRegistered integration event WHEN we process it THEN we create the issuer", func(t *testing.T) {
@@ -16,7 +16,7 @@ func (s *Suite) TestIssuerRegistered() {
 	})
 }
 
-func (s *Suite) RegisterIssuer(id financing.ID) {
+func (s *CommandsSuite) RegisterIssuer(id financing.ID) {
 	t := s.T()
 
 	integrationEvent := intevent.IssuerRegistered{

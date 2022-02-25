@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Suite struct {
+type CommandsSuite struct {
 	suite.Suite
 
 	conn               *grpc.ClientConn
@@ -31,12 +31,12 @@ type Suite struct {
 	eventMarshaler     cqrs.CommandEventMarshaler
 }
 
-func TestFeatures(t *testing.T) {
-	s := new(Suite)
+func TestCommandFeatures(t *testing.T) {
+	s := new(CommandsSuite)
 	suite.Run(t, s)
 }
 
-func (s *Suite) SetupSuite() {
+func (s *CommandsSuite) SetupSuite() {
 	s.waitTime = time.Second
 
 	log, err := config.LoadLoggerConfig().Build()
@@ -44,7 +44,7 @@ func (s *Suite) SetupSuite() {
 		panic(err)
 	}
 
-	serverConfig := config.LoadServerConfig()
+	serverConfig := config.LoadCommandServerConfig()
 	conn, err := grpc.Dial(serverConfig.Address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal("err building commands client", zap.Error(err))
@@ -81,11 +81,11 @@ func (s *Suite) SetupSuite() {
 	s.purgeMessageQueue()
 }
 
-func (s *Suite) TearDownTest() {
+func (s *CommandsSuite) TearDownTest() {
 	s.AssertNoMoreMessages(s.T())
 }
 
-func (s *Suite) TearDownSuite() {
+func (s *CommandsSuite) TearDownSuite() {
 	s.conn.Close()
 }
 
@@ -101,7 +101,7 @@ var integrationEvents = map[string]struct{}{
 }
 
 // expectEvents asserts that messages received from the subscribed are the expected, the order is important
-func (s *Suite) expectEvents(t *testing.T, events ...EventAssertion) {
+func (s *CommandsSuite) expectEvents(t *testing.T, events ...EventAssertion) {
 	for _, e := range events {
 		var m *message.Message
 		t.Logf("expecting event '%s'", e.Actual.EventName())
@@ -121,7 +121,7 @@ func (s *Suite) expectEvents(t *testing.T, events ...EventAssertion) {
 	}
 }
 
-func (s *Suite) waitForMessage(t *testing.T) *message.Message {
+func (s *CommandsSuite) waitForMessage(t *testing.T) *message.Message {
 	for i := 0; i < 3; i++ {
 		select {
 		case m := <-s.subscriberMessageC:
@@ -135,7 +135,7 @@ func (s *Suite) waitForMessage(t *testing.T) *message.Message {
 	return nil
 }
 
-func (s *Suite) AssertNoMoreMessages(t *testing.T) {
+func (s *CommandsSuite) AssertNoMoreMessages(t *testing.T) {
 	time.Sleep(s.waitTime)
 	var messages []*message.Message
 Loop:
@@ -154,7 +154,7 @@ Loop:
 	}
 }
 
-func (s *Suite) purgeMessageQueue() {
+func (s *CommandsSuite) purgeMessageQueue() {
 	for {
 		select {
 		case m := <-s.subscriberMessageC:
@@ -166,27 +166,27 @@ func (s *Suite) purgeMessageQueue() {
 	}
 }
 
-func (s *Suite) publishIntegrationEventAndAssertCreatedInEventSource(t *testing.T, id financing.ID, event interface{}) {
+func (s *CommandsSuite) publishIntegrationEventAndAssertCreatedInEventSource(t *testing.T, id financing.ID, event interface{}) {
 	s.publishEvent(t, event)
 	s.assertContains(t, id)
 }
 
-func (s *Suite) publishEvent(t *testing.T, event interface{}) {
+func (s *CommandsSuite) publishEvent(t *testing.T, event interface{}) {
 	err := s.eventBus.Publish(context.Background(), event)
 	require.NoError(t, err)
 	// wait the event to be processed
 	time.Sleep(s.waitTime)
 }
 
-func (s *Suite) assertContains(t *testing.T, id financing.ID) {
+func (s *CommandsSuite) assertContains(t *testing.T, id financing.ID) {
 	s.assertContainsBool(t, id, true)
 }
 
-func (s *Suite) assertNotContains(t *testing.T, id financing.ID) {
+func (s *CommandsSuite) assertNotContains(t *testing.T, id financing.ID) {
 	s.assertContainsBool(t, id, false)
 }
 
-func (s *Suite) assertContainsBool(t *testing.T, id financing.ID, expected bool) {
+func (s *CommandsSuite) assertContainsBool(t *testing.T, id financing.ID, expected bool) {
 	// wait the event to be processed
 	time.Sleep(s.waitTime)
 	f, err := s.eventStore.Contains(context.Background(), id)

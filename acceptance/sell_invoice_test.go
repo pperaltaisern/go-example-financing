@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func (s *Suite) TestSellInvoice() {
+func (s *CommandsSuite) TestSellInvoice() {
 	t := s.T()
 
 	t.Run("GIVEN an issuer has been registered WHEN he sells an invoice THEN the invoice is created", func(t *testing.T) {
@@ -32,7 +32,7 @@ func (s *Suite) TestSellInvoice() {
 	})
 }
 
-func (s *Suite) RegisterIssuerAndSellInvoice(askingPrice financing.Money) financing.ID {
+func (s *CommandsSuite) RegisterIssuerAndSellInvoice(askingPrice financing.Money) financing.ID {
 	t := s.T()
 
 	// the issuer who sells the invoice must be in database

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func (s *Suite) TestBidOnInvoice() {
+func (s *CommandsSuite) TestBidOnInvoice() {
 	t := s.T()
 
 	t.Run(`
@@ -103,7 +103,7 @@ type FinanceAnInvoiceResult struct {
 	Bid         financing.Bid
 }
 
-func (s *Suite) FinanceAnInvoice() FinanceAnInvoiceResult {
+func (s *CommandsSuite) FinanceAnInvoice() FinanceAnInvoiceResult {
 	t := s.T()
 
 	askingPrice := financing.Money(10)
