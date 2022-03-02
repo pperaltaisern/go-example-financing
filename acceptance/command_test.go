@@ -52,7 +52,7 @@ func (s *CommandsSuite) SetupSuite() {
 	s.conn = conn
 	s.commands = pb.NewCommandsClient(conn)
 
-	repos, es, err := config.LoadPostgresConfig().BuildRepositories()
+	repos, es, err := config.LoadCommandPostgresConfig().BuildRepositories()
 	if err != nil {
 		log.Fatal("err building repositories", zap.Error(err))
 	}

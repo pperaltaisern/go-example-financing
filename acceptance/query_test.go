@@ -52,7 +52,7 @@ func (s *QueriesSuite) SetupSuite() {
 }
 
 func (s *QueriesSuite) SetupTest() {
-	db, err := config.LoadPostgresConfig().BuildGORM()
+	db, err := config.LoadQueryPostgresConfig().BuildGORM()
 	require.NoError(s.T(), err)
 
 	s.eventProjector, err = pg.NewEventProjector(db)

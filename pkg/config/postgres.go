@@ -16,9 +16,15 @@ type PostgresConfig struct {
 	ConnectionString string
 }
 
-func LoadPostgresConfig() PostgresConfig {
+func LoadCommandPostgresConfig() PostgresConfig {
 	return PostgresConfig{
-		ConnectionString: viper.GetString("DB_CONNECTION_STRING"),
+		ConnectionString: viper.GetString("COMMAND_DB_CONNECTION_STRING"),
+	}
+}
+
+func LoadQueryPostgresConfig() PostgresConfig {
+	return PostgresConfig{
+		ConnectionString: viper.GetString("QUERY_DB_CONNECTION_STRING"),
 	}
 }
 
@@ -27,7 +33,12 @@ func (c PostgresConfig) Build() (*pgxpool.Pool, error) {
 }
 
 func (c PostgresConfig) BuildGORM() (*gorm.DB, error) {
-	return gorm.Open(postgres.Open(c.ConnectionString), &gorm.Config{})
+	return gorm.Open(
+		postgres.New(postgres.Config{
+			DSN:                  c.ConnectionString,
+			PreferSimpleProtocol: true,
+		}),
+		&gorm.Config{})
 }
 
 func (c PostgresConfig) BuildRepositories() (Repositories, esrc.EventStore, error) {

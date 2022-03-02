@@ -25,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	repos, _, err := config.LoadPostgresConfig().BuildRepositories()
+	repos, _, err := config.LoadCommandPostgresConfig().BuildRepositories()
 	if err != nil {
 		log.Fatal("err building Postgres repositories: %v", zap.Error(err))
 	}

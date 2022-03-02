@@ -15,6 +15,8 @@ import (
 )
 
 func main() {
+	config.Wait()
+
 	log, err := config.LoadLoggerConfig().Build()
 	if err != nil {
 		panic(err)
@@ -25,7 +27,7 @@ func main() {
 		log.Fatal("err building event bus: %v", zap.Error(err))
 	}
 
-	db, err := config.LoadPostgresConfig().BuildGORM()
+	db, err := config.LoadQueryPostgresConfig().BuildGORM()
 	if err != nil {
 		log.Fatal("err connecting to Postgres: %v", zap.Error(err))
 	}

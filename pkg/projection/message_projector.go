@@ -82,6 +82,52 @@ func (p *MessageProjector) projectMessage(m *message.Message) error {
 		if err := p.eventProjector.ProjectInvestorFundsCommittedEvent(e); err != nil {
 			return err
 		}
+
+	case "InvoiceCreatedEvent":
+		e := &financing.InvoiceCreatedEvent{}
+		if err := p.eventMarshaler.Unmarshal(m, e); err != nil {
+			return err
+		}
+		if err := p.eventProjector.ProjectInvoiceCreatedEvent(e); err != nil {
+			return err
+		}
+
+	case "InvoiceFinancedEvent":
+		e := &financing.InvoiceFinancedEvent{}
+		if err := p.eventMarshaler.Unmarshal(m, e); err != nil {
+			return err
+		}
+		if err := p.eventProjector.ProjectInvoiceFinancedEvent(e); err != nil {
+			return err
+		}
+
+	case "InvoiceReversedEvent":
+		e := &financing.InvoiceReversedEvent{}
+		if err := p.eventMarshaler.Unmarshal(m, e); err != nil {
+			return err
+		}
+		if err := p.eventProjector.ProjectInvoiceReversedEvent(e); err != nil {
+			return err
+		}
+
+	case "InvoiceApprovedEvent":
+		e := &financing.InvoiceApprovedEvent{}
+		if err := p.eventMarshaler.Unmarshal(m, e); err != nil {
+			return err
+		}
+		if err := p.eventProjector.ProjectInvoiceApprovedEvent(e); err != nil {
+			return err
+		}
+
+	case "IssuerCreatedEvent":
+		e := &financing.IssuerCreatedEvent{}
+		if err := p.eventMarshaler.Unmarshal(m, e); err != nil {
+			return err
+		}
+		if err := p.eventProjector.ProjectIssuerCreatedEvent(e); err != nil {
+			return err
+		}
+
 	default:
 		return errUnknownMessage
 	}

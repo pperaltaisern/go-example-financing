@@ -21,7 +21,7 @@ func main() {
 		panic(err)
 	}
 
-	pool, err := config.LoadPostgresConfig().Build()
+	pool, err := config.LoadCommandPostgresConfig().Build()
 	if err != nil {
 		log.Fatal("err connecting to Postgres: %v", zap.Error(err))
 	}

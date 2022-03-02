@@ -46,9 +46,49 @@ func (s *QueryServer) Close() {
 }
 
 func (s *QueryServer) AllInvestors(context.Context, *emptypb.Empty) (*pb.AllInvestorsReply, error) {
-	return nil, nil
+	investors, err := s.investors.All()
+	if err != nil {
+		return nil, err
+	}
+	pbInvestors := make([]*pb.Investor, len(investors))
+	for i, investor := range investors {
+		pbInvestors[i] = &pb.Investor{
+			Id:       ConvertID(investor.ID),
+			Balance:  ConvertMoney(investor.Balance),
+			Reserved: ConvertMoney(investor.Reserved),
+		}
+	}
+
+	return &pb.AllInvestorsReply{
+		Investors: pbInvestors,
+	}, nil
 }
 
 func (s *QueryServer) AllInvoices(context.Context, *emptypb.Empty) (*pb.AllInvoicesReply, error) {
-	return nil, nil
+	invoices, err := s.invoices.All()
+	if err != nil {
+		return nil, err
+	}
+	pbInvoices := make([]*pb.Invoice, len(invoices))
+	for i, invoice := range invoices {
+		var winningBid *pb.Bid
+		if invoice.WinningBid != nil {
+			winningBid = &pb.Bid{
+				InvestorId: ConvertID(invoice.WinningBid.InvestorID),
+				Amount:     ConvertMoney(invoice.WinningBid.Amount),
+			}
+		}
+
+		pbInvoices[i] = &pb.Invoice{
+			Id:          ConvertID(invoice.ID),
+			IssuerId:    ConvertID(invoice.IssuerID),
+			AskingPrice: ConvertMoney(invoice.AskingPrice),
+			Status:      convertInvoiceStatus(invoice.Status),
+			WinningBid:  winningBid,
+		}
+	}
+
+	return &pb.AllInvoicesReply{
+		Invoices: pbInvoices,
+	}, nil
 }

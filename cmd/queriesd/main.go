@@ -1,17 +1,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
 
 	"github.com/pperaltaisern/financing/pkg/config"
-	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/grpc"
-	"github.com/pperaltaisern/financing/pkg/intevent"
+	"github.com/pperaltaisern/financing/pkg/query/pg"
 
-	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"go.uber.org/zap"
 )
 
@@ -24,13 +21,19 @@ func main() {
 		panic(err)
 	}
 
+	db, err := config.LoadQueryPostgresConfig().BuildGORM()
+	if err != nil {
+		log.Fatal("error connecting to postgres", zap.Error(err))
+	}
+
 	serverConfig := config.LoadQueryServerConfig()
 	m := Main{
 		log: log,
 		queryServer: grpc.NewQueryServer(
 			serverConfig.Network,
 			serverConfig.Address,
-			cqrsFacade.CommandBus(),
+			pg.NewInvestorQueries(db),
+			pg.NewInvoiceQueries(db),
 		),
 	}
 
@@ -42,8 +45,6 @@ func main() {
 	}()
 
 	m.Run(errC)
-
-	PublishTestIntegrationEvents(cqrsFacade.EventBus())
 
 	log.Info("ready")
 	log.Info("terminated", zap.Error(<-errC))
@@ -57,34 +58,10 @@ type Main struct {
 }
 
 func (m *Main) Run(errC chan<- error) {
-	go func() { errC <- m.messageRouter.Run(context.Background()) }()
-	go func() { errC <- m.commandServer.Open() }()
+	go func() { errC <- m.queryServer.Open() }()
 }
 
 func (m *Main) Close() {
-	err := m.messageRouter.Close()
-	if err != nil {
-		m.log.Error("err clossing message router %v: err")
-	}
-	m.commandServer.Close()
+	m.queryServer.Close()
 	m.log.Sync()
-}
-
-func PublishTestIntegrationEvents(bus *cqrs.EventBus) {
-	for i := 0; i < 5; i++ {
-		issuerCreated := intevent.IssuerRegistered{
-			ID:   financing.NewID(),
-			Name: fmt.Sprintf("ISSUER_%v", i+1),
-		}
-		bus.Publish(context.Background(), issuerCreated)
-	}
-
-	for i := 0; i < 5; i++ {
-		investorCreated := intevent.InvestorRegistered{
-			ID:      financing.NewID(),
-			Name:    fmt.Sprintf("INVESTOR_%v", i+1),
-			Balance: financing.Money(100),
-		}
-		bus.Publish(context.Background(), investorCreated)
-	}
 }

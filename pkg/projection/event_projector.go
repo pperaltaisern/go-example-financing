@@ -8,6 +8,11 @@ type EventProjector interface {
 	ProjectBidOnInvoicePlacedEvent(*financing.BidOnInvoicePlacedEvent) error
 	ProjectInvestorFundsReleasedEvent(*financing.InvestorFundsReleasedEvent) error
 	ProjectInvestorFundsCommittedEvent(*financing.InvestorFundsCommittedEvent) error
+	ProjectInvoiceCreatedEvent(*financing.InvoiceCreatedEvent) error
+	ProjectInvoiceFinancedEvent(*financing.InvoiceFinancedEvent) error
+	ProjectInvoiceReversedEvent(*financing.InvoiceReversedEvent) error
+	ProjectInvoiceApprovedEvent(*financing.InvoiceApprovedEvent) error
+	ProjectIssuerCreatedEvent(*financing.IssuerCreatedEvent) error
 }
 
 var _ EventProjector = (*MockEventProjector)(nil)
@@ -18,6 +23,11 @@ type MockEventProjector struct {
 	ProjectBidOnInvoicePlacedEventFn     func(*financing.BidOnInvoicePlacedEvent) error
 	ProjectInvestorFundsReleasedEventFn  func(*financing.InvestorFundsReleasedEvent) error
 	ProjectInvestorFundsCommittedEventFn func(*financing.InvestorFundsCommittedEvent) error
+	ProjectInvoiceCreatedEventFn         func(*financing.InvoiceCreatedEvent) error
+	ProjectInvoiceFinancedEventFn        func(*financing.InvoiceFinancedEvent) error
+	ProjectInvoiceReversedEventFn        func(*financing.InvoiceReversedEvent) error
+	ProjectInvoiceApprovedEventFn        func(*financing.InvoiceApprovedEvent) error
+	ProjectIssuerCreatedEventFn          func(*financing.IssuerCreatedEvent) error
 }
 
 func (m *MockEventProjector) ProjectInvestorCreatedEvent(e *financing.InvestorCreatedEvent) error {
@@ -34,4 +44,19 @@ func (m *MockEventProjector) ProjectInvestorFundsReleasedEvent(e *financing.Inve
 }
 func (m *MockEventProjector) ProjectInvestorFundsCommittedEvent(e *financing.InvestorFundsCommittedEvent) error {
 	return m.ProjectInvestorFundsCommittedEventFn(e)
+}
+func (m *MockEventProjector) ProjectInvoiceCreatedEvent(e *financing.InvoiceCreatedEvent) error {
+	return m.ProjectInvoiceCreatedEventFn(e)
+}
+func (m *MockEventProjector) ProjectInvoiceFinancedEvent(e *financing.InvoiceFinancedEvent) error {
+	return m.ProjectInvoiceFinancedEventFn(e)
+}
+func (m *MockEventProjector) ProjectInvoiceReversedEvent(e *financing.InvoiceReversedEvent) error {
+	return m.ProjectInvoiceReversedEventFn(e)
+}
+func (m *MockEventProjector) ProjectInvoiceApprovedEvent(e *financing.InvoiceApprovedEvent) error {
+	return m.ProjectInvoiceApprovedEventFn(e)
+}
+func (m *MockEventProjector) ProjectIssuerCreatedEvent(e *financing.IssuerCreatedEvent) error {
+	return m.ProjectIssuerCreatedEventFn(e)
 }
