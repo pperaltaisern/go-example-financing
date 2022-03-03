@@ -21,7 +21,7 @@ func (s *CommandsSuite) RegisterInvestor(id financing.ID, balance financing.Mone
 
 	integrationEvent := intevent.InvestorRegistered{
 		ID:      id,
-		Name:    "INVESTOR_1",
+		Name:    "TEST_INVESTOR_1",
 		Balance: balance,
 	}
 	eventAssertions := []EventAssertion{

@@ -55,7 +55,9 @@ func main() {
 
 	m.Run(errC)
 
-	PublishTestIntegrationEvents(cqrsFacade.EventBus())
+	if false {
+		PublishTestIntegrationEvents(cqrsFacade.EventBus())
+	}
 
 	log.Info("ready")
 	log.Info("terminated", zap.Error(<-errC))

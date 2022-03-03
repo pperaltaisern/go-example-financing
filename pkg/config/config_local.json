@@ -5,6 +5,6 @@
     "QUERY_SERVER_ADDRESS" : "0.0.0.0:8081",
     "LOGGER_LEVEL" : "INFO",
     "COMMAND_DB_CONNECTION_STRING" : "user=postgres password=postgres host=localhost port=5432 dbname=postgres pool_max_conns=10",
-    "QUERY_DB_CONNECTION_STRING" : "user=postgres password=postgres host=localhost port=5433 dbname=postgres",
+    "QUERY_DB_CONNECTION_STRING" : "user=postgres password=postgres host=localhost port=5432 dbname=queries",
     "AMQP_ADDRESS" : "amqp://guest:guest@localhost:5672/"
 }

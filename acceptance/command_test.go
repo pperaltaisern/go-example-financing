@@ -107,13 +107,13 @@ func (s *CommandsSuite) expectEvents(t *testing.T, events ...EventAssertion) {
 		t.Logf("expecting event '%s'", e.Actual.EventName())
 		for {
 			m = s.waitForMessage(t)
-			eventName := m.Metadata.Get("name")
+			eventName := s.eventMarshaler.NameFromMessage(m)
 			// integrationEvents should come from another queue but for simplicity we put them in the same and ignore them when asserting
 			if _, ok := integrationEvents[eventName]; !ok {
 				break
 			}
 		}
-		require.Equal(t, e.Actual.EventName(), m.Metadata.Get("name"))
+		require.Equal(t, e.Actual.EventName(), s.eventMarshaler.NameFromMessage(m))
 
 		err := s.eventMarshaler.Unmarshal(m, e.Actual)
 		require.NoError(t, err)
@@ -125,9 +125,11 @@ func (s *CommandsSuite) waitForMessage(t *testing.T) *message.Message {
 	for i := 0; i < 3; i++ {
 		select {
 		case m := <-s.subscriberMessageC:
+			s.T().Logf("message obtained from queue: %s", s.eventMarshaler.NameFromMessage(m))
 			m.Ack()
 			return m
 		default:
+			t.Log("wait for message...")
 			time.Sleep(s.waitTime)
 		}
 	}
@@ -158,6 +160,7 @@ func (s *CommandsSuite) purgeMessageQueue() {
 	for {
 		select {
 		case m := <-s.subscriberMessageC:
+			s.T().Logf("message purged: %s", s.eventMarshaler.NameFromMessage(m))
 			m.Ack()
 			time.Sleep(s.waitTime)
 		default:

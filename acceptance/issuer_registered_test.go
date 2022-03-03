@@ -21,7 +21,7 @@ func (s *CommandsSuite) RegisterIssuer(id financing.ID) {
 
 	integrationEvent := intevent.IssuerRegistered{
 		ID:   id,
-		Name: "ISSUER_1",
+		Name: "TEST_ISSUER_1",
 	}
 	eventAssertion := EventAssertion{
 		Expected: financing.NewIssuerCreatedEvent(id),

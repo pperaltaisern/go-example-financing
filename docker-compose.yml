@@ -24,7 +24,7 @@ services:
         restart: always
         environment:
           - WAIT=4000
-          - LOGGER_LEVEL=INFO
+          - LOGGER_LEVEL=DEBUG
           - COMMAND_DB_CONNECTION_STRING=user=postgres password=postgres host=postgres port=5432 dbname=postgres pool_max_conns=10
           - AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672/
         depends_on:

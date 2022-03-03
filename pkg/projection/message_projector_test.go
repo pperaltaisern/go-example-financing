@@ -66,8 +66,8 @@ func TestProjectMessageShould(t *testing.T) {
 
 		// then
 		require.True(t, logged)
-		nackedC := unknownMessage.Nacked()
-		_, isOpen := <-nackedC
+		ackedC := unknownMessage.Acked()
+		_, isOpen := <-ackedC
 		require.False(t, isOpen)
 	})
 }

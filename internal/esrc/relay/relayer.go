@@ -82,7 +82,9 @@ func (c *Relayer) Run() {
 
 func (r *Relayer) relay(ctx context.Context) error {
 	events, err := r.outbox.UnpublishedEvents(ctx)
-	r.log.Debug("unpublished events obtained", zap.Int("count", len(events)))
+	if len(events) > 0 {
+		r.log.Debug("unpublished events obtained", zap.Int("count", len(events)))
+	}
 	if err != nil {
 		return err
 	}

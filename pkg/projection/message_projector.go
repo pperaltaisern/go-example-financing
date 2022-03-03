@@ -30,8 +30,6 @@ func (p *MessageProjector) ProjectMessage(m *message.Message) {
 	err := p.projectMessage(m)
 	if err != nil {
 		p.logErr(m, errUnknownMessage)
-		m.Nack()
-		return
 	}
 	m.Ack()
 }
