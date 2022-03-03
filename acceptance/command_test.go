@@ -144,6 +144,7 @@ Loop:
 	for {
 		select {
 		case m := <-s.subscriberMessageC:
+			s.T().Logf("message obtained from queue in teardown: %s", s.eventMarshaler.NameFromMessage(m))
 			m.Ack()
 			messages = append(messages, m)
 		default:

@@ -43,9 +43,7 @@ func (c AMQPConfig) BuildEventSubscriber(log *zap.Logger, handlerName string) (*
 }
 
 func (c AMQPConfig) BuildCommandBus(log *zap.Logger) (*cqrs.EventBus, error) {
-	amqpConfig := LoadAMQPConfig()
-
-	publisher, err := amqpConfig.BuildEventPublisher(log)
+	publisher, err := c.BuildCommandPublisher(log)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +55,7 @@ func (c AMQPConfig) BuildCommandBus(log *zap.Logger) (*cqrs.EventBus, error) {
 }
 
 func (c AMQPConfig) BuildEventBus(log *zap.Logger) (*cqrs.EventBus, error) {
-	pub, err := c.BuildCommandPublisher(log)
+	pub, err := c.BuildEventPublisher(log)
 	if err != nil {
 		return nil, err
 	}
