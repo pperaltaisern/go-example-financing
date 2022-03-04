@@ -7,8 +7,8 @@ type InvestorQueries interface {
 }
 
 type Investor struct {
-	ID        financing.ID
-	Balance   financing.Money
-	Reserved  financing.Money
-	Committed financing.Money
+	ID        financing.ID    `gorm:"type:uuid"`
+	Balance   financing.Money `gorm:"type:float;"`
+	Reserved  financing.Money `gorm:"type:float;"`
+	Committed financing.Money `gorm:"type:float;"`
 }

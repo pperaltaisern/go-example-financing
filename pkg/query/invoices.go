@@ -8,16 +8,16 @@ type InvoiceQueries interface {
 }
 
 type Invoice struct {
-	ID          financing.ID `gorm:"primaryKey"`
-	IssuerID    financing.ID
-	AskingPrice financing.Money
-	WinningBid  *Bid `gorm:"embedded;embeddedPrefix:winning_bid_"`
+	ID          financing.ID    `gorm:"type:uuid;primary_key;"`
+	IssuerID    financing.ID    `gorm:"type:uuid"`
+	AskingPrice financing.Money `gorm:"type:float;"`
+	WinningBid  *Bid            `gorm:"embedded;embeddedPrefix:winning_bid_"`
 	Status      InvoiceStatus
 }
 
 type Bid struct {
-	InvestorID financing.ID `gorm:"primaryKey"`
-	Amount     financing.Money
+	InvestorID financing.ID    `gorm:"type:uuid"`
+	Amount     financing.Money `gorm:"type:float;"`
 }
 
 type InvoiceStatus string

@@ -34,8 +34,8 @@ func (s *QueriesSuite) TestAllInvestors() {
 		id2 := financing.NewID()
 
 		s.publisEvents(
-			financing.NewInvestorCreatedEvent(id1),
-			financing.NewInvestorCreatedEvent(id2),
+			s.newRelayEvent(id1, financing.NewInvestorCreatedEvent(id1)),
+			s.newRelayEvent(id2, financing.NewInvestorCreatedEvent(id2)),
 		)
 
 		expected := []pb.Investor{
@@ -62,9 +62,9 @@ func (s *QueriesSuite) TestAllInvestors() {
 		id := financing.NewID()
 
 		s.publisEvents(
-			financing.NewInvestorCreatedEvent(id),
-			financing.NewInvestorFundsAddedEvent(id, 20),
-			financing.NewInvestorFundsAddedEvent(id, 30),
+			s.newRelayEvent(id, financing.NewInvestorCreatedEvent(id)),
+			s.newRelayEvent(id, financing.NewInvestorFundsAddedEvent(id, 20)),
+			s.newRelayEvent(id, financing.NewInvestorFundsAddedEvent(id, 30)),
 		)
 
 		expected := pb.Investor{
@@ -91,11 +91,11 @@ func (s *QueriesSuite) TestAllInvestors() {
 		invoiceID := financing.NewID()
 
 		s.publisEvents(
-			financing.NewInvestorCreatedEvent(investorID),
-			financing.NewInvestorFundsAddedEvent(investorID, 30),
-			financing.NewIssuerCreatedEvent(issuerID),
-			financing.NewInvoiceCreatedEvent(invoiceID, issuerID, 15),
-			financing.NewBidOnInvoicePlacedEvent(investorID, invoiceID, 20),
+			s.newRelayEvent(investorID, financing.NewInvestorCreatedEvent(investorID)),
+			s.newRelayEvent(investorID, financing.NewInvestorFundsAddedEvent(investorID, 30)),
+			s.newRelayEvent(issuerID, financing.NewIssuerCreatedEvent(issuerID)),
+			s.newRelayEvent(invoiceID, financing.NewInvoiceCreatedEvent(invoiceID, issuerID, 15)),
+			s.newRelayEvent(investorID, financing.NewBidOnInvoicePlacedEvent(investorID, invoiceID, 20)),
 		)
 
 		expected := pb.Investor{
@@ -121,12 +121,12 @@ func (s *QueriesSuite) TestAllInvestors() {
 		invoiceID := financing.NewID()
 
 		s.publisEvents(
-			financing.NewInvestorCreatedEvent(investorID),
-			financing.NewInvestorFundsAddedEvent(investorID, 15),
-			financing.NewIssuerCreatedEvent(issuerID),
-			financing.NewInvoiceCreatedEvent(invoiceID, issuerID, 15),
-			financing.NewBidOnInvoicePlacedEvent(investorID, invoiceID, 15),
-			financing.NewInvoiceApprovedEvent(invoiceID, 15, financing.NewBid(investorID, 15)),
+			s.newRelayEvent(investorID, financing.NewInvestorCreatedEvent(investorID)),
+			s.newRelayEvent(investorID, financing.NewInvestorFundsAddedEvent(investorID, 15)),
+			s.newRelayEvent(issuerID, financing.NewIssuerCreatedEvent(issuerID)),
+			s.newRelayEvent(invoiceID, financing.NewInvoiceCreatedEvent(invoiceID, issuerID, 15)),
+			s.newRelayEvent(investorID, financing.NewBidOnInvoicePlacedEvent(investorID, invoiceID, 15)),
+			s.newRelayEvent(invoiceID, financing.NewInvoiceApprovedEvent(invoiceID, 15, financing.NewBid(investorID, 15))),
 		)
 
 		expected := pb.Investor{
@@ -152,12 +152,12 @@ func (s *QueriesSuite) TestAllInvestors() {
 		invoiceID := financing.NewID()
 
 		s.publisEvents(
-			financing.NewInvestorCreatedEvent(investorID),
-			financing.NewInvestorFundsAddedEvent(investorID, 15),
-			financing.NewIssuerCreatedEvent(issuerID),
-			financing.NewInvoiceCreatedEvent(invoiceID, issuerID, 15),
-			financing.NewBidOnInvoicePlacedEvent(investorID, invoiceID, 15),
-			financing.NewInvoiceReversedEvent(invoiceID, 15, financing.NewBid(investorID, 15)),
+			s.newRelayEvent(investorID, financing.NewInvestorCreatedEvent(investorID)),
+			s.newRelayEvent(investorID, financing.NewInvestorFundsAddedEvent(investorID, 15)),
+			s.newRelayEvent(issuerID, financing.NewIssuerCreatedEvent(issuerID)),
+			s.newRelayEvent(invoiceID, financing.NewInvoiceCreatedEvent(invoiceID, issuerID, 15)),
+			s.newRelayEvent(investorID, financing.NewBidOnInvoicePlacedEvent(investorID, invoiceID, 15)),
+			s.newRelayEvent(invoiceID, financing.NewInvoiceReversedEvent(invoiceID, 15, financing.NewBid(investorID, 15))),
 		)
 
 		expected := pb.Investor{

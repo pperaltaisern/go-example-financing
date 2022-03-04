@@ -7,7 +7,9 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/pperaltaisern/financing/internal/esrc"
+	"github.com/pperaltaisern/financing/internal/esrc/relay"
 	"github.com/pperaltaisern/financing/pkg/config"
+	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/grpc/pb"
 	"github.com/pperaltaisern/financing/pkg/query/pg"
 	"github.com/stretchr/testify/require"
@@ -68,7 +70,13 @@ func (s *QueriesSuite) TearDownSuite() {
 	s.conn.Close()
 }
 
-func (s *QueriesSuite) publisEvents(events ...esrc.Event) {
+func (s *QueriesSuite) newRelayEvent(aggregateID financing.ID, event esrc.Event) relay.RelayEvent {
+	rawEvents, err := esrc.MarshalEvents([]esrc.Event{event}, esrc.JSONEventMarshaler{})
+	require.NoError(s.T(), err)
+	return relay.NewRelayEvent(aggregateID, 0, rawEvents[0])
+}
+
+func (s *QueriesSuite) publisEvents(events ...relay.RelayEvent) {
 	for _, e := range events {
 		err := s.eventBus.Publish(context.Background(), e)
 		require.NoError(s.T(), err)
