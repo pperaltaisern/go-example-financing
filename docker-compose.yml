@@ -37,10 +37,10 @@ services:
           dockerfile: ./build/queriesd/Dockerfile
         restart: always    
         ports:
-          - "8081:8080"
+          - "8081:8081"
         environment:
           - WAIT=4000
-          - COMMAND_SERVER_ADDRESS=0.0.0.0:8080
+          - QUERY_SERVER_ADDRESS=0.0.0.0:8081
           - LOGGER_LEVEL=INFO
           - QUERY_DB_CONNECTION_STRING=user=postgres password=postgres host=postgres port=5432 dbname=queries
           - AMQP_ADDRESS=amqp://guest:guest@rabbitmq:5672/

@@ -1,14 +1,19 @@
 package pg
 
 import (
+	"database/sql"
+	"time"
+
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/query"
 	"gorm.io/gorm"
 )
 
 type Invoice struct {
-	gorm.Model
 	query.Invoice
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime
 }
 
 type InvoiceQueries struct {
@@ -25,7 +30,7 @@ func NewInvoiceQueries(db *gorm.DB) *InvoiceQueries {
 
 func (q *InvoiceQueries) ByID(id financing.ID) (query.Invoice, error) {
 	var invoice Invoice
-	result := q.db.First(&invoice, id)
+	result := q.db.First(&invoice, "id = ?", id.String())
 	return invoice.Invoice, result.Error
 }
 

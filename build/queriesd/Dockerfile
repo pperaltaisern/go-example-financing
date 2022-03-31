@@ -16,6 +16,6 @@ RUN apk update && apk add curl
 
 COPY --from=builder /go/src/github.com/pperaltaisern/financing/queriesd .
 
-EXPOSE 8080
+EXPOSE 8081
 
 CMD ["./queriesd"]

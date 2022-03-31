@@ -1,9 +1,10 @@
-package e2e
+package acceptance
 
 import (
 	"context"
 	"testing"
 
+	"github.com/pperaltaisern/financing/acceptance/mother"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/grpc"
 	"github.com/pperaltaisern/financing/pkg/grpc/pb"
@@ -18,12 +19,10 @@ func (s *QueriesSuite) TestAllInvestors() {
 	GIVEN that there isn't any investor registered
 	WHEN all investors are queried
 	THEN no results are obtained`, func(t *testing.T) {
-		expected := []pb.Investor{}
-
-		investors, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
+		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, investors)
+		require.Empty(t, reply.Investors)
 	})
 
 	t.Run(`
@@ -38,19 +37,15 @@ func (s *QueriesSuite) TestAllInvestors() {
 			s.newRelayEvent(id2, financing.NewInvestorCreatedEvent(id2)),
 		)
 
-		expected := []pb.Investor{
-			{
-				Id: grpc.ConvertID(id1),
-			},
-			{
-				Id: grpc.ConvertID(id2),
-			},
+		expected := []*pb.Investor{
+			mother.NewInvestor(id1).Build(),
+			mother.NewInvestor(id2).Build(),
 		}
 
-		investors, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
+		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, investors)
+		RequireJSONEq(t, expected, reply.Investors)
 	})
 
 	t.Run(`
@@ -67,15 +62,12 @@ func (s *QueriesSuite) TestAllInvestors() {
 			s.newRelayEvent(id, financing.NewInvestorFundsAddedEvent(id, 30)),
 		)
 
-		expected := pb.Investor{
-			Id:      grpc.ConvertID(id),
-			Balance: &pb.Money{Amount: 50},
-		}
+		expected := mother.NewInvestor(id).WithBalance(50).Build()
 
 		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, findInvestor(reply.Investors, id))
+		RequireJSONEq(t, expected, findInvestor(reply.Investors, id))
 	})
 
 	t.Run(`
@@ -96,18 +88,15 @@ func (s *QueriesSuite) TestAllInvestors() {
 			s.newRelayEvent(issuerID, financing.NewIssuerCreatedEvent(issuerID)),
 			s.newRelayEvent(invoiceID, financing.NewInvoiceCreatedEvent(invoiceID, issuerID, 15)),
 			s.newRelayEvent(investorID, financing.NewBidOnInvoicePlacedEvent(investorID, invoiceID, 20)),
+			s.newRelayEvent(investorID, financing.NewInvestorFundsReleasedEvent(investorID, 5)),
 		)
 
-		expected := pb.Investor{
-			Id:       grpc.ConvertID(investorID),
-			Balance:  &pb.Money{Amount: 15},
-			Reserved: &pb.Money{Amount: 15},
-		}
+		expected := mother.NewInvestor(investorID).WithBalance(15).WithReserved(15).Build()
 
 		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, findInvestor(reply.Investors, investorID))
+		RequireJSONEq(t, expected, findInvestor(reply.Investors, investorID))
 	})
 
 	t.Run(`
@@ -127,18 +116,15 @@ func (s *QueriesSuite) TestAllInvestors() {
 			s.newRelayEvent(invoiceID, financing.NewInvoiceCreatedEvent(invoiceID, issuerID, 15)),
 			s.newRelayEvent(investorID, financing.NewBidOnInvoicePlacedEvent(investorID, invoiceID, 15)),
 			s.newRelayEvent(invoiceID, financing.NewInvoiceApprovedEvent(invoiceID, 15, financing.NewBid(investorID, 15))),
+			s.newRelayEvent(investorID, financing.NewInvestorFundsCommittedEvent(investorID, 15)),
 		)
 
-		expected := pb.Investor{
-			Id:       grpc.ConvertID(investorID),
-			Balance:  &pb.Money{Amount: 0},
-			Reserved: &pb.Money{Amount: 0},
-		}
+		expected := mother.NewInvestor(investorID).Build()
 
 		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, findInvestor(reply.Investors, investorID))
+		RequireJSONEq(t, expected, findInvestor(reply.Investors, investorID))
 	})
 
 	t.Run(`
@@ -158,24 +144,21 @@ func (s *QueriesSuite) TestAllInvestors() {
 			s.newRelayEvent(invoiceID, financing.NewInvoiceCreatedEvent(invoiceID, issuerID, 15)),
 			s.newRelayEvent(investorID, financing.NewBidOnInvoicePlacedEvent(investorID, invoiceID, 15)),
 			s.newRelayEvent(invoiceID, financing.NewInvoiceReversedEvent(invoiceID, 15, financing.NewBid(investorID, 15))),
+			s.newRelayEvent(investorID, financing.NewInvestorFundsReleasedEvent(invoiceID, 15)),
 		)
 
-		expected := pb.Investor{
-			Id:       grpc.ConvertID(investorID),
-			Balance:  &pb.Money{Amount: 15},
-			Reserved: &pb.Money{Amount: 0},
-		}
+		expected := mother.NewInvestor(investorID).WithBalance(15).Build()
 
 		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, findInvestor(reply.Investors, investorID))
+		RequireJSONEq(t, expected, findInvestor(reply.Investors, investorID))
 	})
 }
 
 func findInvestor(investors []*pb.Investor, id financing.ID) *pb.Investor {
 	for _, investor := range investors {
-		if investor.Id == grpc.ConvertID(id) {
+		if investor.Id.Value == grpc.ConvertID(id).Value {
 			return investor
 		}
 	}

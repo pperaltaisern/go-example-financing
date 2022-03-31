@@ -1,4 +1,4 @@
-package e2e
+package acceptance
 
 import (
 	"context"
@@ -18,12 +18,10 @@ func (s *QueriesSuite) TestAllInvoices() {
 	GIVEN that there isn't any invoice
 	WHEN all invoices are queried
 	THEN no results are obtained`, func(t *testing.T) {
-		expected := []pb.Invoice{}
-
-		invoices, err := s.queries.AllInvoices(context.Background(), &emptypb.Empty{})
+		reply, err := s.queries.AllInvoices(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, invoices)
+		require.Empty(t, reply.Invoices)
 	})
 
 	t.Run(`
@@ -59,10 +57,10 @@ func (s *QueriesSuite) TestAllInvoices() {
 			},
 		}
 
-		invoices, err := s.queries.AllInvoices(context.Background(), &emptypb.Empty{})
+		reply, err := s.queries.AllInvoices(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, invoices)
+		RequireJSONEq(t, expected, reply.Invoices)
 	})
 
 	t.Run(`
@@ -98,10 +96,10 @@ func (s *QueriesSuite) TestAllInvoices() {
 			},
 		}
 
-		invoices, err := s.queries.AllInvoices(context.Background(), &emptypb.Empty{})
+		reply, err := s.queries.AllInvoices(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, invoices)
+		RequireJSONEq(t, expected, reply.Invoices)
 	})
 
 	t.Run(`
@@ -139,10 +137,10 @@ func (s *QueriesSuite) TestAllInvoices() {
 			},
 		}
 
-		invoices, err := s.queries.AllInvoices(context.Background(), &emptypb.Empty{})
+		reply, err := s.queries.AllInvoices(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, invoices)
+		RequireJSONEq(t, expected, reply.Invoices)
 	})
 
 	t.Run(`
@@ -180,9 +178,9 @@ func (s *QueriesSuite) TestAllInvoices() {
 			},
 		}
 
-		invoices, err := s.queries.AllInvoices(context.Background(), &emptypb.Empty{})
+		reply, err := s.queries.AllInvoices(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
 
-		require.Equal(t, expected, invoices)
+		RequireJSONEq(t, expected, reply.Invoices)
 	})
 }

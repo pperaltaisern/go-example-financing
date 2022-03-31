@@ -11,12 +11,13 @@ type Invoice struct {
 	ID          financing.ID    `gorm:"type:uuid;primary_key;"`
 	IssuerID    financing.ID    `gorm:"type:uuid"`
 	AskingPrice financing.Money `gorm:"type:float;"`
-	WinningBid  *Bid            `gorm:"embedded;embeddedPrefix:winning_bid_"`
+	WinningBid  *Bid            `gorm:"ForeignKey:InvoiceID"`
 	Status      InvoiceStatus
 }
 
 type Bid struct {
-	InvestorID financing.ID    `gorm:"type:uuid"`
+	InvoiceID  financing.ID    `gorm:"type:uuid,primaryKey"`
+	InvestorID financing.ID    `gorm:"type:uuid,primaryKey"`
 	Amount     financing.Money `gorm:"type:float;"`
 }
 

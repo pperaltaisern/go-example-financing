@@ -133,7 +133,7 @@ func updateInvestor(tx *gorm.DB, id financing.ID, investorUpdate func(investor *
 
 	tx = tx.
 		Clauses(clause.Locking{Strength: "UPDATE"}).
-		First(investor, id)
+		First(investor, "id = ?", id.String())
 	if tx.Error != nil {
 		return tx
 	}
@@ -148,7 +148,7 @@ func updateInvoice(tx *gorm.DB, id financing.ID, invoiceUpdate func(invoice *Inv
 
 	tx = tx.
 		Clauses(clause.Locking{Strength: "UPDATE"}).
-		First(invoice, id)
+		First(invoice, "id = ?", id.String())
 	if tx.Error != nil {
 		return tx
 	}
