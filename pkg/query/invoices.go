@@ -1,6 +1,9 @@
 package query
 
-import "github.com/pperaltaisern/financing/pkg/financing"
+import (
+	"github.com/pperaltaisern/financing/pkg/financing"
+	"gorm.io/gorm"
+)
 
 type InvoiceQueries interface {
 	ByID(financing.ID) (Invoice, error)
@@ -11,13 +14,14 @@ type Invoice struct {
 	ID          financing.ID    `gorm:"type:uuid;primary_key;"`
 	IssuerID    financing.ID    `gorm:"type:uuid"`
 	AskingPrice financing.Money `gorm:"type:float;"`
-	WinningBid  *Bid            `gorm:"ForeignKey:InvoiceID"`
+	WinningBid  *Bid
 	Status      InvoiceStatus
 }
 
 type Bid struct {
-	InvoiceID  financing.ID    `gorm:"type:uuid,primaryKey"`
-	InvestorID financing.ID    `gorm:"type:uuid,primaryKey"`
+	gorm.Model
+	InvoiceID  financing.ID    `gorm:"type:uuid,ForeignKey:InvoiceID"`
+	InvestorID financing.ID    `gorm:"type:uuid"`
 	Amount     financing.Money `gorm:"type:float;"`
 }
 

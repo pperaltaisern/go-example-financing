@@ -30,13 +30,13 @@ func NewInvoiceQueries(db *gorm.DB) *InvoiceQueries {
 
 func (q *InvoiceQueries) ByID(id financing.ID) (query.Invoice, error) {
 	var invoice Invoice
-	result := q.db.First(&invoice, "id = ?", id.String())
+	result := q.db.Preload("WinningBid").First(&invoice, "id = ?", id.String())
 	return invoice.Invoice, result.Error
 }
 
 func (q *InvoiceQueries) All() ([]query.Invoice, error) {
 	var invoices []Invoice
-	result := q.db.Find(&invoices)
+	result := q.db.Preload("WinningBid").Find(&invoices)
 	if result.Error != nil {
 		return nil, result.Error
 	}

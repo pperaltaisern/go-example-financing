@@ -59,6 +59,9 @@ func (s *QueriesSuite) SetupTest() {
 
 	s.eventProjector, err = pg.NewEventProjector(db)
 	require.NoError(s.T(), err)
+
+	err = s.eventProjector.Clean()
+	require.NoError(s.T(), err)
 }
 
 func (s *QueriesSuite) TearDownTest() {

@@ -30,6 +30,8 @@ func (s *QueriesSuite) TestAllInvoices() {
 	AND she sells an invoice with asking price of 20
 	WHEN all invoices are queried
 	THEN 2 available invoices are obtained without bids`, func(t *testing.T) {
+		defer s.TearDownTest()
+
 		issuerID := financing.NewID()
 		invoiceID1 := financing.NewID()
 		invoiceID2 := financing.NewID()
@@ -51,7 +53,7 @@ func (s *QueriesSuite) TestAllInvoices() {
 			{
 				Id:          grpc.ConvertID(invoiceID2),
 				IssuerId:    grpc.ConvertID(issuerID),
-				AskingPrice: &pb.Money{Amount: 30},
+				AskingPrice: &pb.Money{Amount: 20},
 				Status:      pb.InvoiceStatus_AVAILABLE,
 				WinningBid:  nil,
 			},
@@ -71,6 +73,8 @@ func (s *QueriesSuite) TestAllInvoices() {
 	WHEN all invoices are queried
 	THEN the invoice is obtained with status financed 
 	AND the winning bid of that investor with an amount of 20`, func(t *testing.T) {
+		defer s.TearDownTest()
+
 		issuerID := financing.NewID()
 		invoiceID := financing.NewID()
 		investorID := financing.NewID()
@@ -80,7 +84,8 @@ func (s *QueriesSuite) TestAllInvoices() {
 			s.newRelayEvent(invoiceID, financing.NewInvoiceCreatedEvent(invoiceID, issuerID, 15)),
 			s.newRelayEvent(investorID, financing.NewInvestorCreatedEvent(investorID)),
 			s.newRelayEvent(investorID, financing.NewInvestorFundsAddedEvent(investorID, 20)),
-			s.newRelayEvent(investorID, financing.NewBidOnInvoicePlacedEvent(investorID, investorID, 20)),
+			s.newRelayEvent(investorID, financing.NewBidOnInvoicePlacedEvent(investorID, invoiceID, 20)),
+			s.newRelayEvent(invoiceID, financing.NewInvoiceFinancedEvent(invoiceID, 15, financing.NewBid(investorID, 20))),
 		)
 
 		expected := []*pb.Invoice{
@@ -111,6 +116,8 @@ func (s *QueriesSuite) TestAllInvoices() {
 	WHEN all invoices are queried
 	THEN the invoice is obtained with status accepted 
 	AND the winning bid of that investor with an amount of 20`, func(t *testing.T) {
+		defer s.TearDownTest()
+
 		issuerID := financing.NewID()
 		invoiceID := financing.NewID()
 		investorID := financing.NewID()
@@ -121,6 +128,7 @@ func (s *QueriesSuite) TestAllInvoices() {
 			s.newRelayEvent(investorID, financing.NewInvestorCreatedEvent(investorID)),
 			s.newRelayEvent(investorID, financing.NewInvestorFundsAddedEvent(investorID, 20)),
 			s.newRelayEvent(investorID, financing.NewBidOnInvoicePlacedEvent(investorID, investorID, 20)),
+			s.newRelayEvent(invoiceID, financing.NewInvoiceFinancedEvent(invoiceID, 15, financing.NewBid(investorID, 20))),
 			s.newRelayEvent(invoiceID, financing.NewInvoiceApprovedEvent(invoiceID, 15, financing.NewBid(investorID, 20))),
 		)
 
@@ -152,6 +160,8 @@ func (s *QueriesSuite) TestAllInvoices() {
 	WHEN all invoices are queried
 	THEN the invoice is obtained with status reversed 
 	AND the winning bid of that investor with an amount of 20`, func(t *testing.T) {
+		defer s.TearDownTest()
+
 		issuerID := financing.NewID()
 		invoiceID := financing.NewID()
 		investorID := financing.NewID()
@@ -162,6 +172,7 @@ func (s *QueriesSuite) TestAllInvoices() {
 			s.newRelayEvent(investorID, financing.NewInvestorCreatedEvent(investorID)),
 			s.newRelayEvent(investorID, financing.NewInvestorFundsAddedEvent(investorID, 20)),
 			s.newRelayEvent(investorID, financing.NewBidOnInvoicePlacedEvent(investorID, investorID, 20)),
+			s.newRelayEvent(invoiceID, financing.NewInvoiceFinancedEvent(invoiceID, 15, financing.NewBid(investorID, 20))),
 			s.newRelayEvent(invoiceID, financing.NewInvoiceReversedEvent(invoiceID, 15, financing.NewBid(investorID, 20))),
 		)
 

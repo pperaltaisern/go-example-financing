@@ -18,6 +18,7 @@ type EventProjector struct {
 var tables = []interface{}{
 	&Investor{},
 	&Invoice{},
+	&query.Bid{},
 }
 
 func NewEventProjector(db *gorm.DB) (*EventProjector, error) {
@@ -31,7 +32,10 @@ func NewEventProjector(db *gorm.DB) (*EventProjector, error) {
 }
 
 func (c *EventProjector) Clean() error {
-	return c.db.Migrator().DropTable(tables...)
+	for _, model := range tables {
+		c.db.Where("1 = 1").Delete(model)
+	}
+	return nil
 }
 
 func (c *EventProjector) ProjectInvestorCreatedEvent(e *financing.InvestorCreatedEvent) error {
