@@ -12,42 +12,42 @@ type Repository struct {
 	eventMarshaler EventMarshaler
 }
 
-func NewRepository(at AggregateType, es EventStore, ef EventFactory, em EventMarshaler) Repository {
-	return Repository{
-		aggregateType:  at,
+func NewRepository(t AggregateType, es EventStore, ef EventFactory, em EventMarshaler) *Repository {
+	return &Repository{
+		aggregateType:  t,
 		eventStore:     es,
 		eventFactory:   ef,
 		eventMarshaler: em,
 	}
 }
 
-func (r Repository) ByID(ctx context.Context, id ID) ([]Event, error) {
-	rawEvents, err := r.eventStore.Load(ctx, id)
+func (r *Repository) FindByID(ctx context.Context, id ID) ([]Event, error) {
+	rawEvents, err := r.eventStore.Load(ctx, r.aggregateType, id)
 	if err != nil {
 		return nil, err
 	}
 
 	events := make([]Event, len(rawEvents))
 	for i, raw := range rawEvents {
-		e, err := r.eventFactory.CreateEmptyEvent(raw.Name)
+		event, err := r.eventFactory.CreateEmptyEvent(raw.Name)
 		if err != nil {
 			return nil, err
 		}
-		err = r.eventMarshaler.UnmarshalEvent(raw.Data, e)
+		err = r.eventMarshaler.UnmarshalEvent(raw.Data, event)
 		if err != nil {
 			return nil, err
 		}
-		events[i] = e
+		events[i] = event
 	}
 
 	return events, nil
 }
 
-func (r Repository) Contains(ctx context.Context, id ID) (bool, error) {
-	return r.eventStore.Contains(ctx, id)
+func (r *Repository) Contains(ctx context.Context, id ID) (bool, error) {
+	return r.eventStore.Contains(ctx, r.aggregateType, id)
 }
 
-func (r Repository) Update(ctx context.Context, id ID, fromVersion int, events []Event) error {
+func (r *Repository) Update(ctx context.Context, id ID, fromVersion int, events []Event) error {
 	if len(events) == 0 {
 		return nil
 	}
@@ -56,10 +56,10 @@ func (r Repository) Update(ctx context.Context, id ID, fromVersion int, events [
 	if err != nil {
 		return err
 	}
-	return r.eventStore.AppendEvents(ctx, id, fromVersion, rawEvents)
+	return r.eventStore.AppendEvents(ctx, r.aggregateType, id, fromVersion, rawEvents)
 }
 
-func (r Repository) Add(ctx context.Context, id ID, events []Event) error {
+func (r *Repository) Add(ctx context.Context, id ID, events []Event) error {
 	rawEvents, err := MarshalEvents(events, r.eventMarshaler)
 	if err != nil {
 		return err

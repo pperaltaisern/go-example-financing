@@ -29,6 +29,10 @@ type QueriesSuite struct {
 }
 
 func TestQueryFeatures(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping acceptance test")
+	}
+
 	s := new(QueriesSuite)
 	suite.Run(t, s)
 }

@@ -15,7 +15,7 @@ type InvoiceRepository interface {
 type UpdateInvoice func(inv *Invoice) error
 
 type invoiceRepository struct {
-	r esrc.Repository
+	r *esrc.Repository
 }
 
 func NewInvoiceRepository(es esrc.EventStore) InvoiceRepository {
@@ -60,7 +60,7 @@ func (r invoiceRepository) Update(ctx context.Context, id ID, update UpdateInvoi
 }
 
 func (r invoiceRepository) byID(ctx context.Context, id ID) (*Invoice, error) {
-	events, err := r.r.ByID(ctx, id)
+	events, err := r.r.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

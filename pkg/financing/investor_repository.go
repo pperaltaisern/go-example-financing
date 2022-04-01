@@ -15,7 +15,7 @@ type InvestorRepository interface {
 type UpdateInvestor func(inv *Investor) error
 
 type investorRepository struct {
-	r esrc.Repository
+	r *esrc.Repository
 }
 
 func NewInvestorRepository(es esrc.EventStore) InvestorRepository {
@@ -60,7 +60,7 @@ func (r investorRepository) Update(ctx context.Context, id ID, update UpdateInve
 }
 
 func (r investorRepository) byID(ctx context.Context, id ID) (*Investor, error) {
-	events, err := r.r.ByID(ctx, id)
+	events, err := r.r.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

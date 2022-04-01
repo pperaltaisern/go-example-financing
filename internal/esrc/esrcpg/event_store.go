@@ -24,7 +24,7 @@ func NewEventStore(pool *pgxpool.Pool) *EventStore {
 	}
 }
 
-func (es *EventStore) Load(ctx context.Context, id esrc.ID) ([]esrc.RawEvent, error) {
+func (es *EventStore) Load(ctx context.Context, _ esrc.AggregateType, id esrc.ID) ([]esrc.RawEvent, error) {
 	const queryEvents = "SELECT name, data FROM events WHERE event_source_id = $1 ORDER BY version ASC"
 	rows, err := es.pool.Query(ctx, queryEvents, id)
 	if err != nil {
@@ -51,7 +51,7 @@ func (es *EventStore) Load(ctx context.Context, id esrc.ID) ([]esrc.RawEvent, er
 	return events, nil
 }
 
-func (es *EventStore) Contains(ctx context.Context, id esrc.ID) (bool, error) {
+func (es *EventStore) Contains(ctx context.Context, _ esrc.AggregateType, id esrc.ID) (bool, error) {
 	const existsStream = "SELECT EXISTS(SELECT 1 FROM event_streams WHERE id=$1)"
 	rows, err := es.pool.Query(ctx, existsStream, id)
 	if err != nil {
@@ -92,7 +92,7 @@ func (es *EventStore) Create(ctx context.Context, t esrc.AggregateType, id esrc.
 	})
 }
 
-func (es *EventStore) AppendEvents(ctx context.Context, id esrc.ID, fromVersion int, events []esrc.RawEvent) error {
+func (es *EventStore) AppendEvents(ctx context.Context, _ esrc.AggregateType, id esrc.ID, fromVersion int, events []esrc.RawEvent) error {
 	if fromVersion == 0 {
 		return esrc.ErrAggregateNotFound
 	}

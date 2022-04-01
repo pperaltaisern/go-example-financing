@@ -27,6 +27,15 @@ func NewEventStoreOutbox(pool *pgxpool.Pool) *EventStoreOutbox {
 	}
 }
 
+// type EventStoreOutboxOption func(*EventStoreOutbox)
+
+// // RelayWitInterval sets the time duration that the Relayer will wait within loops
+// func RelayerWithInterval(interval time.Duration) RelayerOption {
+// 	return func(c *Relayer) {
+// 		c.interval = interval
+// 	}
+// }
+
 func (o *EventStoreOutbox) UnpublishedEvents(ctx context.Context) ([]relay.RelayEvent, error) {
 	const query = "SELECT event_source_id, version, name, data FROM events WHERE published = FALSE ORDER BY version ASC"
 	rows, err := o.pool.Query(ctx, query)

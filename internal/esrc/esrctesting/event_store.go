@@ -11,14 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type EventStoreAcceptance struct {
+type EventStoreAcceptanceSuite struct {
 	eventStore esrc.EventStore
 	outbox     relay.EventStoreOutbox
 	newID      func() esrc.ID
 }
 
-func NewEventStoreAcceptance(es esrc.EventStore, opts ...EventStoreAcceptanceOption) *EventStoreAcceptance {
-	a := &EventStoreAcceptance{
+func NewEventStoreAcceptanceSuite(es esrc.EventStore, opts ...EventStoreAcceptanceSuiteOption) *EventStoreAcceptanceSuite {
+	a := &EventStoreAcceptanceSuite{
 		eventStore: es,
 		newID:      func() esrc.ID { return uuid.New() },
 	}
@@ -29,21 +29,23 @@ func NewEventStoreAcceptance(es esrc.EventStore, opts ...EventStoreAcceptanceOpt
 	return a
 }
 
-type EventStoreAcceptanceOption func(*EventStoreAcceptance)
+type EventStoreAcceptanceSuiteOption func(*EventStoreAcceptanceSuite)
 
-func EventStoreAcceptanceNewID(newID func() esrc.ID) EventStoreAcceptanceOption {
-	return func(a *EventStoreAcceptance) {
+func EventStoreAcceptanceSuiteNewID(newID func() esrc.ID) EventStoreAcceptanceSuiteOption {
+	return func(a *EventStoreAcceptanceSuite) {
 		a.newID = newID
 	}
 }
 
-func EventStoreAcceptanceWithOutbox(o relay.EventStoreOutbox) EventStoreAcceptanceOption {
-	return func(a *EventStoreAcceptance) {
+func EventStoreAcceptanceSuiteWithOutbox(o relay.EventStoreOutbox) EventStoreAcceptanceSuiteOption {
+	return func(a *EventStoreAcceptanceSuite) {
 		a.outbox = o
 	}
 }
 
-func (a *EventStoreAcceptance) Test(t *testing.T) {
+const testAggregateType = "test"
+
+func (a *EventStoreAcceptanceSuite) Test(t *testing.T) {
 	t.Parallel()
 	t.Run("TestFromEmptyEventStore", func(t *testing.T) {
 		t.Run("LoadNotExistingAggregate", func(t *testing.T) {
@@ -94,22 +96,22 @@ func (a *EventStoreAcceptance) Test(t *testing.T) {
 			a.AssertContaintsExistingAggregate(t, id)
 		})
 		t.Run("Load", func(t *testing.T) {
-			loadedEvents, err := a.eventStore.Load(context.Background(), id)
+			loadedEvents, err := a.eventStore.Load(context.Background(), testAggregateType, id)
 			_ = assert.NoError(t, err) &&
 				assert.Equal(t, initialEvents, loadedEvents)
 		})
 
 		t.Run("AppendEvents", func(t *testing.T) {
-			err := a.eventStore.AppendEvents(context.Background(), id, len(initialEvents), appendedEvents)
+			err := a.eventStore.AppendEvents(context.Background(), testAggregateType, id, len(initialEvents), appendedEvents)
 			_ = assert.NoError(t, err)
 		})
 		t.Run("AppendEvents same events (simulation for optimistic concurrency)", func(t *testing.T) {
-			err := a.eventStore.AppendEvents(context.Background(), id, len(initialEvents), appendedEvents)
+			err := a.eventStore.AppendEvents(context.Background(), testAggregateType, id, len(initialEvents), appendedEvents)
 			_ = assert.Error(t, err) &&
 				assert.Equal(t, esrc.ErrOptimisticConcurrency, err)
 		})
 		t.Run("Load after appended events", func(t *testing.T) {
-			loadedEvents, err := a.eventStore.Load(context.Background(), id)
+			loadedEvents, err := a.eventStore.Load(context.Background(), testAggregateType, id)
 			_ = assert.NoError(t, err) &&
 				assert.Len(t, loadedEvents, 4) &&
 				assert.Equal(t, initialEvents, loadedEvents[0:2]) &&
@@ -155,26 +157,26 @@ func (a *EventStoreAcceptance) Test(t *testing.T) {
 	}
 }
 
-func (a *EventStoreAcceptance) AssertLoadNotExistingAggregate(t *testing.T) bool {
-	events, err := a.eventStore.Load(context.Background(), a.newID())
+func (a *EventStoreAcceptanceSuite) AssertLoadNotExistingAggregate(t *testing.T) bool {
+	events, err := a.eventStore.Load(context.Background(), testAggregateType, a.newID())
 	return assert.Error(t, err) &&
 		assert.Equal(t, err, esrc.ErrAggregateNotFound) &&
 		assert.Empty(t, events)
 }
 
-func (a *EventStoreAcceptance) AssertContaintsExistingAggregate(t *testing.T, id esrc.ID) bool {
-	found, err := a.eventStore.Contains(context.Background(), id)
+func (a *EventStoreAcceptanceSuite) AssertContaintsExistingAggregate(t *testing.T, id esrc.ID) bool {
+	found, err := a.eventStore.Contains(context.Background(), testAggregateType, id)
 	return assert.NoError(t, err) &&
 		assert.True(t, found)
 }
 
-func (a *EventStoreAcceptance) AssertContainsNotExistingAggregate(t *testing.T) bool {
-	found, err := a.eventStore.Contains(context.Background(), a.newID())
+func (a *EventStoreAcceptanceSuite) AssertContainsNotExistingAggregate(t *testing.T) bool {
+	found, err := a.eventStore.Contains(context.Background(), testAggregateType, a.newID())
 	return assert.NoError(t, err) &&
 		assert.False(t, found)
 }
 
-func (a *EventStoreAcceptance) AssertCreateEmptyAggregate(t *testing.T) bool {
+func (a *EventStoreAcceptanceSuite) AssertCreateEmptyAggregate(t *testing.T) bool {
 	events := make([]esrc.RawEvent, 0)
 
 	err := a.eventStore.Create(context.Background(), "type", a.newID(), events)
@@ -182,10 +184,10 @@ func (a *EventStoreAcceptance) AssertCreateEmptyAggregate(t *testing.T) bool {
 		assert.Equal(t, err, esrc.ErrAggregateRequiresEvents)
 }
 
-func (a *EventStoreAcceptance) AssertAppendEventsToNotExistingAggregate(t *testing.T) bool {
+func (a *EventStoreAcceptanceSuite) AssertAppendEventsToNotExistingAggregate(t *testing.T) bool {
 	events := make([]esrc.RawEvent, 1)
 
-	err := a.eventStore.AppendEvents(context.Background(), a.newID(), 0, events)
+	err := a.eventStore.AppendEvents(context.Background(), testAggregateType, a.newID(), 0, events)
 	return assert.Error(t, err) &&
 		assert.Equal(t, err, esrc.ErrAggregateNotFound)
 }

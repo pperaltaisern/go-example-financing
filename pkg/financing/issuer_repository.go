@@ -12,7 +12,7 @@ type IssuerRepository interface {
 }
 
 type issuerRepository struct {
-	r esrc.Repository
+	r *esrc.Repository
 }
 
 func NewIssuerRepository(es esrc.EventStore) IssuerRepository {

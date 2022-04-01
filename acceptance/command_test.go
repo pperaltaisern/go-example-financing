@@ -32,6 +32,10 @@ type CommandsSuite struct {
 }
 
 func TestCommandFeatures(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping acceptance test")
+	}
+
 	s := new(CommandsSuite)
 	suite.Run(t, s)
 }
@@ -193,7 +197,7 @@ func (s *CommandsSuite) assertNotContains(t *testing.T, id financing.ID) {
 func (s *CommandsSuite) assertContainsBool(t *testing.T, id financing.ID, expected bool) {
 	// wait the event to be processed
 	time.Sleep(s.waitTime)
-	f, err := s.eventStore.Contains(context.Background(), id)
+	f, err := s.eventStore.Contains(context.Background(), "", id)
 	require.NoError(t, err)
 	require.Equal(t, expected, f)
 }
