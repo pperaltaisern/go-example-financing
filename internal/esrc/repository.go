@@ -21,30 +21,39 @@ func NewRepository(t AggregateType, es EventStore, ef EventFactory, em EventMars
 	}
 }
 
-func (r *Repository) FindByID(ctx context.Context, id ID) ([]Event, error) {
-	rawEvents, err := r.eventStore.Load(ctx, r.aggregateType, id)
+func (r *Repository) FindByID(ctx context.Context, id ID) (*RawSnapshot, []Event, error) {
+	snapshot, err := r.eventStore.LatestSnapshot(ctx, r.aggregateType, id)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	fromEventVersion := 0
+	if snapshot != nil {
+		fromEventVersion = snapshot.Version + 1
+	}
+
+	rawEvents, err := r.eventStore.Events(ctx, r.aggregateType, id, fromEventVersion)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	events := make([]Event, len(rawEvents))
 	for i, raw := range rawEvents {
 		event, err := r.eventFactory.CreateEmptyEvent(raw.Name)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		err = r.eventMarshaler.UnmarshalEvent(raw.Data, event)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		events[i] = event
 	}
 
-	return events, nil
+	return snapshot, events, nil
 }
 
 func (r *Repository) Contains(ctx context.Context, id ID) (bool, error) {
-	return r.eventStore.Contains(ctx, r.aggregateType, id)
+	return r.eventStore.ContainsAggregate(ctx, r.aggregateType, id)
 }
 
 func (r *Repository) Update(ctx context.Context, id ID, fromVersion int, events []Event) error {
@@ -64,5 +73,5 @@ func (r *Repository) Add(ctx context.Context, id ID, events []Event) error {
 	if err != nil {
 		return err
 	}
-	return r.eventStore.Create(ctx, r.aggregateType, id, rawEvents)
+	return r.eventStore.AddAggregate(ctx, r.aggregateType, id, rawEvents)
 }

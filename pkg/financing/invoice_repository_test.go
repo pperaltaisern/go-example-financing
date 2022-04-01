@@ -20,7 +20,7 @@ func TestInvoiceRepository_Update(t *testing.T) {
 
 	var calls int
 	es := &esrc.MockEventStore{
-		LoadFn: func(ctx context.Context, t esrc.AggregateType, id esrc.ID) ([]esrc.RawEvent, error) {
+		AddAggregateFn: func(ctx context.Context, t esrc.AggregateType, id esrc.ID) ([]esrc.RawEvent, error) {
 			calls++
 			return rawEvents, nil
 		},
