@@ -24,57 +24,7 @@ func NewEventStore(pool *pgxpool.Pool) *EventStore {
 	}
 }
 
-func (es *EventStore) Load(ctx context.Context, _ esrc.AggregateType, id esrc.ID) ([]esrc.RawEvent, error) {
-	const queryEvents = "SELECT name, data FROM events WHERE event_source_id = $1 ORDER BY version ASC"
-	rows, err := es.pool.Query(ctx, queryEvents, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var events []esrc.RawEvent
-	for rows.Next() {
-		var name string
-		var data []byte
-		err := rows.Scan(&name, &data)
-		if err != nil {
-			return nil, err
-		}
-		events = append(events, esrc.RawEvent{Name: name, Data: data})
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	if len(events) == 0 {
-		return nil, esrc.ErrAggregateNotFound
-	}
-	return events, nil
-}
-
-func (es *EventStore) Contains(ctx context.Context, _ esrc.AggregateType, id esrc.ID) (bool, error) {
-	const existsStream = "SELECT EXISTS(SELECT 1 FROM event_streams WHERE id=$1)"
-	rows, err := es.pool.Query(ctx, existsStream, id)
-	if err != nil {
-		return false, err
-	}
-	defer rows.Close()
-
-	rows.Next()
-	err = rows.Err()
-	if err != nil {
-		return false, err
-	}
-
-	var exists bool
-	err = rows.Scan(&exists)
-	if err != nil {
-		return false, err
-	}
-
-	return exists, nil
-}
-
-func (es *EventStore) Create(ctx context.Context, t esrc.AggregateType, id esrc.ID, events []esrc.RawEvent) error {
+func (es *EventStore) AddAggregate(ctx context.Context, t esrc.AggregateType, id esrc.ID, events []esrc.RawEvent) error {
 	if len(events) == 0 {
 		return esrc.ErrAggregateRequiresEvents
 	}
@@ -119,6 +69,64 @@ func appendEvents(ctx context.Context, tx pgx.Tx, id esrc.ID, fromVersion int, e
 		}
 	}
 	return nil
+}
+
+func (es *EventStore) AddSnapshot(ctx context.Context, _ esrc.AggregateType, id esrc.ID, snapshot esrc.RawSnapshot) error {
+	return nil
+}
+
+func (es *EventStore) LatestSnapshot(ctx context.Context, _ esrc.AggregateType, id esrc.ID) (*esrc.RawSnapshot, error) {
+	return nil, nil
+}
+
+func (es *EventStore) Events(ctx context.Context, _ esrc.AggregateType, id esrc.ID, fromVersion int) ([]esrc.RawEvent, error) {
+	const queryEvents = "SELECT name, data FROM events WHERE event_source_id = $1 ORDER BY version ASC"
+	rows, err := es.pool.Query(ctx, queryEvents, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []esrc.RawEvent
+	for rows.Next() {
+		var name string
+		var data []byte
+		err := rows.Scan(&name, &data)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, esrc.RawEvent{Name: name, Data: data})
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(events) == 0 {
+		return nil, esrc.ErrAggregateNotFound
+	}
+	return events, nil
+}
+
+func (es *EventStore) ContainsAggregate(ctx context.Context, _ esrc.AggregateType, id esrc.ID) (bool, error) {
+	const existsStream = "SELECT EXISTS(SELECT 1 FROM event_streams WHERE id=$1)"
+	rows, err := es.pool.Query(ctx, existsStream, id)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	rows.Next()
+	err = rows.Err()
+	if err != nil {
+		return false, err
+	}
+
+	var exists bool
+	err = rows.Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }
 
 func isUniqueViolationErr(err error) bool {

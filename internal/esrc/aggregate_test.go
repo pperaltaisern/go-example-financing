@@ -37,8 +37,8 @@ func TestNewAggregateFromEventsShouldCreateAnAggregateWithAllEventsReplayedAndIn
 	var c int
 	events := []Event{testEvent{}, testEvent{}}
 
-	a := NewAggregateFromEvents(events, testOnEventFunc(&c))
-	_ = assert.Equal(t, 2, a.Version()) &&
+	a := NewAggregateFromEvents(1, events, testOnEventFunc(&c))
+	_ = assert.Equal(t, 3, a.Version()) &&
 		assert.Len(t, a.Events(), 0) &&
 		assert.Equal(t, 2, c)
 }

@@ -1,7 +1,7 @@
 package esrc
 
-// Aggregate is a helper base struct that can be embbeded in real aggregates
-// that handles the execution of events raised and keeps trak of the versioning
+// Aggregate is a helper base struct that can be embbeded in real aggregates,
+// handles the execution of raised events and keeps track of the versioning
 type Aggregate struct {
 	changes []Event
 	version int
@@ -15,14 +15,15 @@ func NewAggregate(onEvent func(Event)) Aggregate {
 	}
 }
 
-func NewAggregateFromEvents(events []Event, onEvent func(Event)) Aggregate {
+func NewAggregateFromEvents(initialVersion int, events []Event, onEvent func(Event)) Aggregate {
 	a := NewAggregate(onEvent)
+	a.version = initialVersion
 	a.replay(events)
 	return a
 }
 
 func (a *Aggregate) replay(events []Event) {
-	a.version = len(events)
+	a.version += len(events)
 	for _, e := range events {
 		a.onEvent(e)
 	}

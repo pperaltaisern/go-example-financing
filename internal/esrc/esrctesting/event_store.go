@@ -84,11 +84,11 @@ func (a *EventStoreAcceptanceSuite) Test(t *testing.T) {
 
 	t.Run("TestFromPopulatedStore", func(t *testing.T) {
 		t.Run("CreateValidAggregate", func(t *testing.T) {
-			err := a.eventStore.Create(context.Background(), "type", id, initialEvents)
+			err := a.eventStore.AddAggregate(context.Background(), "type", id, initialEvents)
 			assert.NoError(t, err)
 		})
 		t.Run("CreateAlreadyExistingAggregate", func(t *testing.T) {
-			err := a.eventStore.Create(context.Background(), "type", id, initialEvents)
+			err := a.eventStore.AddAggregate(context.Background(), "type", id, initialEvents)
 			_ = assert.Error(t, err) &&
 				assert.Equal(t, esrc.ErrAggregateAlreadyExists, err)
 		})
@@ -96,7 +96,7 @@ func (a *EventStoreAcceptanceSuite) Test(t *testing.T) {
 			a.AssertContaintsExistingAggregate(t, id)
 		})
 		t.Run("Load", func(t *testing.T) {
-			loadedEvents, err := a.eventStore.Load(context.Background(), testAggregateType, id)
+			loadedEvents, err := a.eventStore.Events(context.Background(), testAggregateType, id, 0)
 			_ = assert.NoError(t, err) &&
 				assert.Equal(t, initialEvents, loadedEvents)
 		})
@@ -111,7 +111,7 @@ func (a *EventStoreAcceptanceSuite) Test(t *testing.T) {
 				assert.Equal(t, esrc.ErrOptimisticConcurrency, err)
 		})
 		t.Run("Load after appended events", func(t *testing.T) {
-			loadedEvents, err := a.eventStore.Load(context.Background(), testAggregateType, id)
+			loadedEvents, err := a.eventStore.Events(context.Background(), testAggregateType, id, 0)
 			_ = assert.NoError(t, err) &&
 				assert.Len(t, loadedEvents, 4) &&
 				assert.Equal(t, initialEvents, loadedEvents[0:2]) &&
@@ -158,20 +158,20 @@ func (a *EventStoreAcceptanceSuite) Test(t *testing.T) {
 }
 
 func (a *EventStoreAcceptanceSuite) AssertLoadNotExistingAggregate(t *testing.T) bool {
-	events, err := a.eventStore.Load(context.Background(), testAggregateType, a.newID())
+	events, err := a.eventStore.Events(context.Background(), testAggregateType, a.newID(), 0)
 	return assert.Error(t, err) &&
 		assert.Equal(t, err, esrc.ErrAggregateNotFound) &&
 		assert.Empty(t, events)
 }
 
 func (a *EventStoreAcceptanceSuite) AssertContaintsExistingAggregate(t *testing.T, id esrc.ID) bool {
-	found, err := a.eventStore.Contains(context.Background(), testAggregateType, id)
+	found, err := a.eventStore.ContainsAggregate(context.Background(), testAggregateType, id)
 	return assert.NoError(t, err) &&
 		assert.True(t, found)
 }
 
 func (a *EventStoreAcceptanceSuite) AssertContainsNotExistingAggregate(t *testing.T) bool {
-	found, err := a.eventStore.Contains(context.Background(), testAggregateType, a.newID())
+	found, err := a.eventStore.ContainsAggregate(context.Background(), testAggregateType, a.newID())
 	return assert.NoError(t, err) &&
 		assert.False(t, found)
 }
@@ -179,7 +179,7 @@ func (a *EventStoreAcceptanceSuite) AssertContainsNotExistingAggregate(t *testin
 func (a *EventStoreAcceptanceSuite) AssertCreateEmptyAggregate(t *testing.T) bool {
 	events := make([]esrc.RawEvent, 0)
 
-	err := a.eventStore.Create(context.Background(), "type", a.newID(), events)
+	err := a.eventStore.AddAggregate(context.Background(), "type", a.newID(), events)
 	return assert.Error(t, err) &&
 		assert.Equal(t, err, esrc.ErrAggregateRequiresEvents)
 }
