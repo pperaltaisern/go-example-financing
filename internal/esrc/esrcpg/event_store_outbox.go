@@ -37,7 +37,7 @@ func NewEventStoreOutbox(pool *pgxpool.Pool) *EventStoreOutbox {
 // }
 
 func (o *EventStoreOutbox) UnpublishedEvents(ctx context.Context) ([]relay.RelayEvent, error) {
-	const query = "SELECT event_source_id, version, name, data FROM events WHERE published = FALSE ORDER BY version ASC"
+	const query = "SELECT aggregate_id, version, name, data FROM events WHERE published = FALSE ORDER BY version ASC"
 	rows, err := o.pool.Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (o *EventStoreOutbox) MarkEventsAsPublised(ctx context.Context, events []re
 			b.WriteByte(',')
 		}
 	}
-	b.WriteString(") as p(esid, v) WHERE e.event_source_id = p.esid AND e.version = p.v")
+	b.WriteString(") as p(esid, v) WHERE e.aggregate_id = p.esid AND e.version = p.v")
 
 	_, err := o.pool.Exec(ctx, b.String())
 	return err

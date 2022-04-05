@@ -20,15 +20,12 @@ type EventStore interface {
 	// AddSnapshot stores a snapshot of an aggregate.
 	// errs:
 	//		ErrAggregateNotFound
+	//		ErrSnapshotWithGreaterVersionThanAggregate
 	AddSnapshot(context.Context, AggregateType, ID, RawSnapshot) error
 	// LatestSnapshot retrieves the snapshot with higher version of an aggregate. Returns a nil snapshot if there isn't any.
-	// errs:
-	// 		ErrAggregateNotFound
 	LatestSnapshot(context.Context, AggregateType, ID) (*RawSnapshot, error)
 	// Events retrieves all events of an aggregate from a given event number. If requested from event 0 all events
 	// are obtained.
-	// errs:
-	// 		ErrAggregateNotFound
 	Events(ctx context.Context, t AggregateType, id ID, fromEventNumber int) ([]RawEvent, error)
 	// Contains looks if there is an event stream for an aggregate ID without loading its events,
 	// returns true if the aggregate exists.
@@ -43,8 +40,9 @@ type ID interface{}
 type AggregateType string
 
 var (
-	ErrAggregateNotFound       = errors.New("aggregate not found")
-	ErrAggregateAlreadyExists  = errors.New("aggregate already exists")
-	ErrAggregateRequiresEvents = errors.New("an aggregate requires events")
-	ErrOptimisticConcurrency   = errors.New("optimistic concurrency error")
+	ErrAggregateNotFound                       = errors.New("aggregate not found")
+	ErrAggregateAlreadyExists                  = errors.New("aggregate already exists")
+	ErrAggregateRequiresEvents                 = errors.New("an aggregate requires events")
+	ErrOptimisticConcurrency                   = errors.New("optimistic concurrency error")
+	ErrSnapshotWithGreaterVersionThanAggregate = errors.New("snapshot version is greater than that of the aggregate")
 )
