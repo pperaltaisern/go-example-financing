@@ -31,7 +31,7 @@ func main() {
 		log.Fatal("err building event bus: %v", zap.Error(err))
 	}
 
-	relayer := relay.NewRelayer(
+	relayer := relay.NewBackgroundRelayer(
 		esrcpg.NewEventStoreOutbox(pool),
 		esrcwatermill.NewPublisher(bus),
 		relay.RelayerWithLogger(log),

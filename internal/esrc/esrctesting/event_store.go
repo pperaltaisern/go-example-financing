@@ -7,7 +7,6 @@ import (
 	"github.com/pperaltaisern/financing/internal/esrc"
 	"github.com/pperaltaisern/financing/internal/esrc/relay"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +20,7 @@ type EventStoreAcceptanceSuite struct {
 func NewEventStoreAcceptanceSuite(es esrc.EventStore, opts ...EventStoreAcceptanceSuiteOption) *EventStoreAcceptanceSuite {
 	a := &EventStoreAcceptanceSuite{
 		eventStore: es,
-		newID:      func() esrc.ID { return uuid.New() },
+		newID:      UUIDGenerator(),
 	}
 
 	for _, opt := range opts {

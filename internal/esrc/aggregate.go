@@ -1,7 +1,7 @@
 package esrc
 
 // Aggregate is a helper base struct that can be embbeded in real aggregates,
-// handles the execution of raised events and keeps track of the versioning
+// handles the execution of raised events and keeps track of versioning
 type Aggregate struct {
 	changes []Event
 	version int

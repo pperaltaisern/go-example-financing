@@ -19,9 +19,9 @@ func TestEventStoreAcceptance(t *testing.T) {
 
 	es := NewEventStore(pool)
 	o := NewEventStoreOutbox(pool)
-	a := esrctesting.NewEventStoreAcceptanceSuite(es,
+	acceptance := esrctesting.NewEventStoreAcceptanceSuite(es,
 		esrctesting.EventStoreAcceptanceSuiteWithOutbox(o))
-	a.Test(t)
+	acceptance.Test(t)
 }
 
 func integrationTest(t *testing.T) {

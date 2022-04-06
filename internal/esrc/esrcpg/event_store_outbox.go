@@ -15,8 +15,7 @@ import (
 )
 
 type EventStoreOutbox struct {
-	pool     *pgxpool.Pool
-	encodeID func(esrc.ID) string
+	pool *pgxpool.Pool
 }
 
 var _ (relay.EventStoreOutbox) = (*EventStoreOutbox)(nil)
@@ -27,17 +26,8 @@ func NewEventStoreOutbox(pool *pgxpool.Pool) *EventStoreOutbox {
 	}
 }
 
-// type EventStoreOutboxOption func(*EventStoreOutbox)
-
-// // RelayWitInterval sets the time duration that the Relayer will wait within loops
-// func RelayerWithInterval(interval time.Duration) RelayerOption {
-// 	return func(c *Relayer) {
-// 		c.interval = interval
-// 	}
-// }
-
 func (o *EventStoreOutbox) UnpublishedEvents(ctx context.Context) ([]relay.RelayEvent, error) {
-	const query = "SELECT aggregate_id, version, name, data FROM events WHERE published = FALSE ORDER BY version ASC"
+	const query = "SELECT aggregate_id, version, name, data FROM " + tableEvents + " WHERE published = FALSE ORDER BY version ASC"
 	rows, err := o.pool.Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -70,9 +60,8 @@ func (o *EventStoreOutbox) MarkEventsAsPublised(ctx context.Context, events []re
 	b.WriteString("UPDATE events AS e SET published = TRUE FROM (values")
 	for i := range events {
 		b.WriteString("('")
-		b.WriteString(fmt.Sprintf("%v", events[i].AggregateID))
-		// TODO: UUID should be configurable
-		b.WriteString("'::UUID, ")
+		writeUpdateFromID(b, events[i].AggregateID)
+		b.WriteString(", ")
 		b.WriteString(strconv.FormatUint(events[i].Sequence, 10))
 		b.WriteString(")")
 		if i+1 != len(events) {
@@ -83,4 +72,13 @@ func (o *EventStoreOutbox) MarkEventsAsPublised(ctx context.Context, events []re
 
 	_, err := o.pool.Exec(ctx, b.String())
 	return err
+}
+
+func writeUpdateFromID(b *strings.Builder, id esrc.ID) {
+	switch id.(type) {
+	case uuid.UUID:
+		b.WriteString(fmt.Sprintf("%v'::UUID", id))
+	default:
+		b.WriteString(fmt.Sprintf("%v'", id))
+	}
 }
