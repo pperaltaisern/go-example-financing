@@ -6,10 +6,11 @@ import (
 
 // Repository is a layer on top of an EventStore that reduces the boilerplate needed to build a domain repository
 type Repository struct {
-	aggregateType  AggregateType
-	eventStore     EventStore
-	eventFactory   EventFactory
-	eventMarshaler EventMarshaler
+	aggregateType    AggregateType
+	aggregateFactory AggregateFactory
+	eventStore       EventStore
+	eventFactory     EventFactory
+	eventMarshaler   EventMarshaler
 }
 
 func NewRepository(t AggregateType, es EventStore, ef EventFactory, em EventMarshaler) *Repository {
@@ -20,6 +21,8 @@ func NewRepository(t AggregateType, es EventStore, ef EventFactory, em EventMars
 		eventMarshaler: em,
 	}
 }
+
+type RepositoryOption func(*RepositoryOption)
 
 func (r *Repository) FindByID(ctx context.Context, id ID) (*RawSnapshot, []Event, error) {
 	snapshot, err := r.eventStore.LatestSnapshot(ctx, r.aggregateType, id)

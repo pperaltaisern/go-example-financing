@@ -6,10 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewAggregateShouldCreateAggregateWithVersion0AndNoEvents(t *testing.T) {
-	a := NewAggregate(nil)
-	_ = assert.Equal(t, 0, a.Version()) &&
-		assert.Len(t, a.Events(), 0)
+func TestNewEventRaiserAggregateShouldCreateAggregateWithVersion0AndNoEvents(t *testing.T) {
+	a := NewEventRaiserAggregate(nil)
+	_ = assert.Equal(t, 0, a.InitialVersion()) &&
+		assert.Len(t, a.Changes(), 0)
 }
 
 func testOnEventFunc(c *int) func(Event) {
@@ -22,23 +22,23 @@ type testEvent struct{}
 
 func (testEvent) EventName() string { return "TestEvent" }
 
-func TestAggregateShouldAppendRaisedEventsAndExecuteTheOnEventFunctionEachTimeAnEventIsRaised(t *testing.T) {
+func TestNewEventRaiserAggregateShouldAppendRaisedEventsAndExecuteTheOnEventFunctionEachTimeAnEventIsRaised(t *testing.T) {
 	var c int
-	a := NewAggregate(testOnEventFunc(&c))
+	a := NewEventRaiserAggregate(testOnEventFunc(&c))
 	a.Raise(testEvent{})
 	a.Raise(testEvent{})
 
-	_ = assert.Equal(t, 0, a.Version()) &&
-		assert.Len(t, a.Events(), 2) &&
+	_ = assert.Equal(t, 0, a.InitialVersion()) &&
+		assert.Len(t, a.Changes(), 2) &&
 		assert.Equal(t, 2, c)
 }
 
-func TestNewAggregateFromEventsShouldCreateAnAggregateWithAllEventsReplayedAndIncrementHisVersion(t *testing.T) {
+func TestNewEventRaiserAggregateFromEventsShouldCreateAnAggregateWithAllEventsReplayedAndIncrementHisVersion(t *testing.T) {
 	var c int
 	events := []Event{testEvent{}, testEvent{}}
 
-	a := NewAggregateFromEvents(1, events, testOnEventFunc(&c))
-	_ = assert.Equal(t, 3, a.Version()) &&
-		assert.Len(t, a.Events(), 0) &&
+	a := NewEventRaiserAggregateFromEvents(1, events, testOnEventFunc(&c))
+	_ = assert.Equal(t, 3, a.InitialVersion()) &&
+		assert.Len(t, a.Changes(), 0) &&
 		assert.Equal(t, 2, c)
 }

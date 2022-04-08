@@ -1,43 +1,53 @@
 package esrc
 
-// Aggregate is a helper base struct that can be embbeded in real aggregates,
-// handles the execution of raised events and keeps track of versioning
-type Aggregate struct {
-	changes []Event
-	version int
-
-	onEvent func(Event)
+type AggregateFactory interface {
+	NewAggregateFromSnapshotAndEvents(RawSnapshot, []Event) (Aggregate, error)
+	NewAggregateFromEvents([]Event) (Aggregate, error)
 }
 
-func NewAggregate(onEvent func(Event)) Aggregate {
-	return Aggregate{
+type Aggregate interface {
+	InitialVersion() int
+	Changes() []Event
+	Snapshot() (RawSnapshot, error)
+}
+
+// EventRaiserAggregate is a helper struct that can be embbeded in real aggregates,
+// handles the execution of raised events and keeps track of versioning
+type EventRaiserAggregate struct {
+	initialVersion int
+	changes        []Event
+	onEvent        func(Event)
+}
+
+func NewEventRaiserAggregate(onEvent func(Event)) EventRaiserAggregate {
+	return EventRaiserAggregate{
 		onEvent: onEvent,
 	}
 }
 
-func NewAggregateFromEvents(initialVersion int, events []Event, onEvent func(Event)) Aggregate {
-	a := NewAggregate(onEvent)
-	a.version = initialVersion
+func NewEventRaiserAggregateFromEvents(initialVersion int, events []Event, onEvent func(Event)) EventRaiserAggregate {
+	a := NewEventRaiserAggregate(onEvent)
+	a.initialVersion = initialVersion
 	a.replay(events)
 	return a
 }
 
-func (a *Aggregate) replay(events []Event) {
-	a.version += len(events)
+func (a EventRaiserAggregate) Changes() []Event {
+	return a.changes
+}
+
+func (a EventRaiserAggregate) InitialVersion() int {
+	return a.initialVersion
+}
+
+func (a *EventRaiserAggregate) replay(events []Event) {
+	a.initialVersion += len(events)
 	for _, e := range events {
 		a.onEvent(e)
 	}
 }
 
-func (a *Aggregate) Raise(e Event) {
+func (a *EventRaiserAggregate) Raise(e Event) {
 	a.changes = append(a.changes, e)
 	a.onEvent(e)
-}
-
-func (a Aggregate) Events() []Event {
-	return a.changes
-}
-
-func (a Aggregate) Version() int {
-	return a.version
 }
