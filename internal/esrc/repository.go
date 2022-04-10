@@ -166,3 +166,17 @@ func (r *Repository[T]) shouldDoSnapshot(aggregate T) bool {
 	return r.eventsPerSnapshot > 0 &&
 		(aggregate.InitialVersion()%r.eventsPerSnapshot)+len(aggregate.Changes()) >= r.eventsPerSnapshot
 }
+
+func (r *Repository[T]) UpdateByID(ctx context.Context, id ID, update func(aggregate T) error) error {
+	aggregate, err := r.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	err = update(aggregate)
+	if err != nil {
+		return err
+	}
+
+	return r.Update(ctx, aggregate)
+}

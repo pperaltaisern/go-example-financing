@@ -9,6 +9,7 @@ import (
 	"github.com/pperaltaisern/financing/internal/watermillzap"
 	"github.com/pperaltaisern/financing/pkg/command"
 	"github.com/pperaltaisern/financing/pkg/eventhandler"
+	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/intevent"
 	"go.uber.org/zap"
 )
@@ -46,12 +47,23 @@ func BuildCqrsFacade(log *zap.Logger, repos Repositories) (*cqrs.Facade, *messag
 		},
 		CommandHandlers: func(cb *cqrs.CommandBus, eb *cqrs.EventBus) []cqrs.CommandHandler {
 			return []cqrs.CommandHandler{
-				command.NewBidOnInvoiceHandler(repos.Investors),
-				command.NewApproveFinancingHandler(repos.Invoices),
-				command.NewReverseFinancingHandler(repos.Invoices),
-				command.NewSellInvoiceHandler(repos.Issuers, repos.Invoices),
-				command.NewCreateInvestorHandler(repos.Investors),
-				command.NewCreateIssuerHandler(repos.Issuers),
+				esrcwatermill.NewHandler[command.BidOnInvoice](
+					command.NewBidOnInvoiceHandler(repos.Investors)),
+
+				esrcwatermill.NewHandler[command.ApproveFinancing](
+					command.NewApproveFinancingHandler(repos.Invoices)),
+
+				esrcwatermill.NewHandler[command.ReverseFinancing](
+					command.NewReverseFinancingHandler(repos.Invoices)),
+
+				esrcwatermill.NewHandler[command.SellInvoice](
+					command.NewSellInvoiceHandler(repos.Issuers, repos.Invoices)),
+
+				esrcwatermill.NewHandler[command.CreateInvestor](
+					command.NewCreateInvestorHandler(repos.Investors)),
+
+				esrcwatermill.NewHandler[command.CreateIssuer](
+					command.NewCreateIssuerHandler(repos.Issuers)),
 			}
 		},
 		CommandsPublisher: commandsPublisher,
@@ -62,13 +74,27 @@ func BuildCqrsFacade(log *zap.Logger, repos Repositories) (*cqrs.Facade, *messag
 		GenerateEventsTopic: generateEventsTopic,
 		EventHandlers: func(cb *cqrs.CommandBus, eb *cqrs.EventBus) []cqrs.EventHandler {
 			return []cqrs.EventHandler{
-				eventhandler.NewBidOnInvoicePlacedHandler(repos.Invoices),
-				eventhandler.NewBidOnInvoiceRejectedHandler(repos.Investors),
-				eventhandler.NewInvoiceFinancedHandler(repos.Investors),
-				eventhandler.NewInvoiceReversedHandler(repos.Investors),
-				eventhandler.NewInvoiceApprovedHandler(repos.Investors),
-				intevent.NewInvestorRegisteredHandler(cb),
-				intevent.NewIssuerRegisteredHandler(cb),
+
+				esrcwatermill.NewHandler[financing.BidOnInvoicePlacedEvent](
+					eventhandler.NewBidOnInvoicePlacedHandler(repos.Invoices)),
+
+				esrcwatermill.NewHandler[financing.BidOnInvoiceRejectedEvent](
+					eventhandler.NewBidOnInvoiceRejectedHandler(repos.Investors)),
+
+				esrcwatermill.NewHandler[financing.InvoiceFinancedEvent](
+					eventhandler.NewInvoiceFinancedHandler(repos.Investors)),
+
+				esrcwatermill.NewHandler[financing.InvoiceReversedEvent](
+					eventhandler.NewInvoiceReversedHandler(repos.Investors)),
+
+				esrcwatermill.NewHandler[financing.InvoiceApprovedEvent](
+					eventhandler.NewInvoiceApprovedHandler(repos.Investors)),
+
+				esrcwatermill.NewHandler[intevent.InvestorRegistered](
+					intevent.NewInvestorRegisteredHandler(cb)),
+
+				esrcwatermill.NewHandler[intevent.IssuerRegistered](
+					intevent.NewIssuerRegisteredHandler(cb)),
 			}
 		},
 		EventsSubscriberConstructor: func(handlerName string) (message.Subscriber, error) {

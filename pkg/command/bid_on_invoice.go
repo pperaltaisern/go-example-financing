@@ -1,6 +1,10 @@
 package command
 
-import "github.com/pperaltaisern/financing/pkg/financing"
+import (
+	"context"
+
+	"github.com/pperaltaisern/financing/pkg/financing"
+)
 
 type BidOnInvoice struct {
 	InvestorID financing.ID
@@ -14,4 +18,20 @@ func NewBidOnInvoice(investorID, invoiceID financing.ID, bidAmount financing.Mon
 		InvoiceID:  invoiceID,
 		BidAmount:  bidAmount,
 	}
+}
+
+type BidOnInvoiceHandler struct {
+	investors financing.InvestorRepository
+}
+
+func NewBidOnInvoiceHandler(r financing.InvestorRepository) *BidOnInvoiceHandler {
+	return &BidOnInvoiceHandler{
+		investors: r,
+	}
+}
+
+func (h *BidOnInvoiceHandler) Handle(ctx context.Context, cmd *BidOnInvoice) error {
+	return h.investors.Update(ctx, cmd.InvestorID, func(investor *financing.Investor) error {
+		return investor.BidOnInvoice(cmd.InvoiceID, cmd.BidAmount)
+	})
 }

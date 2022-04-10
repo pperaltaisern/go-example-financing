@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/pperaltaisern/financing/pkg/financing"
-
-	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )
 
 type BidOnInvoicePlacedHandler struct {
@@ -18,19 +16,7 @@ func NewBidOnInvoicePlacedHandler(r financing.InvoiceRepository) *BidOnInvoicePl
 	}
 }
 
-var _ cqrs.EventHandler = (*BidOnInvoicePlacedHandler)(nil)
-
-func (h *BidOnInvoicePlacedHandler) HandlerName() string {
-	return "BidOnInvoicePlacedHandler"
-}
-
-func (h *BidOnInvoicePlacedHandler) NewEvent() interface{} {
-	return &financing.BidOnInvoicePlacedEvent{}
-}
-
-func (h *BidOnInvoicePlacedHandler) Handle(ctx context.Context, e interface{}) error {
-	event := e.(*financing.BidOnInvoicePlacedEvent)
-
+func (h *BidOnInvoicePlacedHandler) Handle(ctx context.Context, event *financing.BidOnInvoicePlacedEvent) error {
 	return h.invoices.Update(ctx, event.InvoiceID, func(invoice *financing.Invoice) error {
 		bid := financing.NewBid(event.InvestorID, event.BidAmount)
 		invoice.ProcessBid(bid)

@@ -359,6 +359,67 @@ func TestRepository(t *testing.T) {
 			require.True(t, addSnapshotHasBeenCalled)
 		})
 	})
+
+	t.Run("UpdateByIDShould", func(t *testing.T) {
+		t.Run("UpdateStoredAggregateWithAnUpdateFunc", func(t *testing.T) {
+			id := 10
+			events := []Event{
+				foundEvent,
+			}
+			rawEvents, err := MarshalEvents(events, JSONEventMarshaler{})
+			require.NoError(t, err)
+
+			aggregate := &MockAggregate{
+				IDFn:             func() ID { return id },
+				InitialVersionFn: func() int { return 1 },
+				ChangesFn:        func() []Event { return events },
+			}
+
+			aggregateFactory := &MockAggregateFactory[*MockAggregate]{
+				NewAggregateFromEventsFn: func(e []Event) (*MockAggregate, error) {
+					return aggregate, nil
+				},
+			}
+
+			var calls int
+			es := &MockEventStore{
+				EventsFn: func(ctx context.Context, at AggregateType, i1 ID, i2 int) ([]RawEvent, error) {
+					calls++
+					return rawEvents, nil
+				},
+				LatestSnapshotFn: func(ctx context.Context, at AggregateType, i ID) (*RawSnapshot, error) {
+					calls += 2
+					return nil, nil
+				},
+				AppendEventsFn: func(ctx context.Context, _ AggregateType, thisID ID, fromVersion int, events []RawEvent) error {
+					calls += 10
+					require.Equal(t, thisID, id)
+					require.Equal(t, 1, fromVersion)
+					require.Len(t, events, 1)
+					return nil
+				},
+			}
+
+			eventFactory := &MockEventFactory{
+				CreateEmptyEventFn: func(name string) (Event, error) {
+					return foundEvent, nil
+				},
+			}
+
+			r := NewRepository[*MockAggregate](es, aggregateFactory, eventFactory)
+
+			updateFuncCalled := 0
+			err = r.UpdateByID(context.Background(), id, func(thisAggregate *MockAggregate) error {
+				updateFuncCalled++
+				require.Equal(t, aggregate, thisAggregate)
+				return nil
+			})
+
+			require.NoError(t, err)
+			require.Equal(t, 13, calls)
+			require.Equal(t, 1, updateFuncCalled)
+		})
+	})
 }
 
 func TestRepositoryShouldDoSnapshotWhenEventLimitSetAndReached(t *testing.T) {

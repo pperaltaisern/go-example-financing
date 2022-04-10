@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/pperaltaisern/financing/pkg/financing"
-
-	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )
 
 type InvoiceFinancedHandler struct {
@@ -17,20 +15,7 @@ func NewInvoiceFinancedHandler(r financing.InvestorRepository) *InvoiceFinancedH
 		investors: r,
 	}
 }
-
-var _ cqrs.EventHandler = (*InvoiceFinancedHandler)(nil)
-
-func (h *InvoiceFinancedHandler) HandlerName() string {
-	return "InvoiceFinancedHandler"
-}
-
-func (h *InvoiceFinancedHandler) NewEvent() interface{} {
-	return &financing.InvoiceFinancedEvent{}
-}
-
-func (h *InvoiceFinancedHandler) Handle(ctx context.Context, e interface{}) error {
-	event := e.(*financing.InvoiceFinancedEvent)
-
+func (h *InvoiceFinancedHandler) Handle(ctx context.Context, event *financing.InvoiceFinancedEvent) error {
 	unplacedBid := event.Bid.Amount - event.AskingPrice
 	if unplacedBid <= 0 {
 		return nil

@@ -8,7 +8,7 @@ import (
 	"github.com/pperaltaisern/financing/pkg/financing"
 )
 
-// MessageProjector is a layer on top of an EventProjector responsable of deserializing and routing events
+// MessageProjector is a layer on top of an EventProjector responsible of deserializing and routing events
 type MessageProjector struct {
 	eventProjector EventProjector
 	eventMarshaler cqrs.CommandEventMarshaler

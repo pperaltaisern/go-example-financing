@@ -24,21 +24,7 @@ func NewInvoiceRepository(es esrc.EventStore, opts ...esrc.RepositoryOption[*Inv
 }
 
 func (r invoiceRepository) Update(ctx context.Context, id ID, update UpdateInvoice) error {
-	inv, err := r.byID(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	err = update(inv)
-	if err != nil {
-		return err
-	}
-
-	return r.r.Update(ctx, inv)
-}
-
-func (r invoiceRepository) byID(ctx context.Context, id ID) (*Invoice, error) {
-	return r.r.FindByID(ctx, id)
+	return r.r.UpdateByID(ctx, id, update)
 }
 
 func (r invoiceRepository) Add(ctx context.Context, inv *Invoice) error {

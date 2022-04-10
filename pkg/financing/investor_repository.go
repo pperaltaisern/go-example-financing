@@ -19,30 +19,12 @@ type investorRepository struct {
 
 func NewInvestorRepository(es esrc.EventStore, opts ...esrc.RepositoryOption[*Investor]) InvestorRepository {
 	return investorRepository{
-		r: esrc.NewRepository[*Investor](
-			es,
-			investorFactory{},
-			investorEventsFactory{},
-			opts...),
+		r: esrc.NewRepository[*Investor](es, investorFactory{}, investorEventsFactory{}, opts...),
 	}
 }
 
 func (r investorRepository) Update(ctx context.Context, id ID, update UpdateInvestor) error {
-	inv, err := r.byID(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	err = update(inv)
-	if err != nil {
-		return err
-	}
-
-	return r.r.Update(ctx, inv)
-}
-
-func (r investorRepository) byID(ctx context.Context, id ID) (*Investor, error) {
-	return r.r.FindByID(ctx, id)
+	return r.r.UpdateByID(ctx, id, update)
 }
 
 func (r investorRepository) Add(ctx context.Context, inv *Investor) error {

@@ -1,4 +1,4 @@
-package mother
+package builder
 
 import (
 	"github.com/pperaltaisern/financing/pkg/financing"

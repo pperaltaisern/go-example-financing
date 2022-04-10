@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/pperaltaisern/financing/acceptance/mother"
+	"github.com/pperaltaisern/financing/acceptance/builder"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/grpc"
 	"github.com/pperaltaisern/financing/pkg/grpc/pb"
@@ -38,8 +38,8 @@ func (s *QueriesSuite) TestAllInvestors() {
 		)
 
 		expected := []*pb.Investor{
-			mother.NewInvestor(id1).Build(),
-			mother.NewInvestor(id2).Build(),
+			builder.NewInvestor(id1).Build(),
+			builder.NewInvestor(id2).Build(),
 		}
 
 		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
@@ -62,7 +62,7 @@ func (s *QueriesSuite) TestAllInvestors() {
 			s.newRelayEvent(id, financing.NewInvestorFundsAddedEvent(id, 30)),
 		)
 
-		expected := mother.NewInvestor(id).WithBalance(50).Build()
+		expected := builder.NewInvestor(id).WithBalance(50).Build()
 
 		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
@@ -91,7 +91,7 @@ func (s *QueriesSuite) TestAllInvestors() {
 			s.newRelayEvent(investorID, financing.NewInvestorFundsReleasedEvent(investorID, 5)),
 		)
 
-		expected := mother.NewInvestor(investorID).WithBalance(15).WithReserved(15).Build()
+		expected := builder.NewInvestor(investorID).WithBalance(15).WithReserved(15).Build()
 
 		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
@@ -119,7 +119,7 @@ func (s *QueriesSuite) TestAllInvestors() {
 			s.newRelayEvent(investorID, financing.NewInvestorFundsCommittedEvent(investorID, 15)),
 		)
 
-		expected := mother.NewInvestor(investorID).Build()
+		expected := builder.NewInvestor(investorID).Build()
 
 		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
@@ -147,7 +147,7 @@ func (s *QueriesSuite) TestAllInvestors() {
 			s.newRelayEvent(investorID, financing.NewInvestorFundsReleasedEvent(invoiceID, 15)),
 		)
 
-		expected := mother.NewInvestor(investorID).WithBalance(15).Build()
+		expected := builder.NewInvestor(investorID).WithBalance(15).Build()
 
 		reply, err := s.queries.AllInvestors(context.Background(), &emptypb.Empty{})
 		require.NoError(t, err)
