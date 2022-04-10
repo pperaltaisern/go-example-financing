@@ -34,7 +34,7 @@ type EventStore interface {
 
 // ID is the aggregate id, modeled as empty interface since it's a specific domain concern.
 // Ideally, the EventStore's implementation should be able to handle different id types by configuration.
-type ID interface{}
+type ID any
 
 // AggregateType is stored as part of the event stream, needed when IDs are only unique within the same AggregateType
 type AggregateType string

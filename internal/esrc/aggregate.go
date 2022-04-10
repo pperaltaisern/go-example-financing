@@ -1,14 +1,15 @@
 package esrc
 
-type AggregateFactory interface {
-	NewAggregateFromSnapshotAndEvents(RawSnapshot, []Event) (Aggregate, error)
-	NewAggregateFromEvents([]Event) (Aggregate, error)
+type AggregateFactory[T Aggregate] interface {
+	NewAggregateFromSnapshotAndEvents(RawSnapshot, []Event) (T, error)
+	NewAggregateFromEvents([]Event) (T, error)
 }
 
 type Aggregate interface {
+	ID() ID
 	InitialVersion() int
 	Changes() []Event
-	Snapshot() (RawSnapshot, error)
+	Snapshot() ([]byte, error)
 }
 
 // EventRaiserAggregate is a helper struct that can be embbeded in real aggregates,

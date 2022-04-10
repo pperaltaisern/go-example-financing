@@ -79,7 +79,7 @@ func (r *Command) Execute(ctx context.Context) error {
 
 	err = r.outbox.MarkEventsAsPublised(ctx, events)
 	if err != nil {
-		level.Error(r.log).Log("msg", "mark events as published err", "err", err)
+		level.Error(r.log).Log("msg", "mark events as published error", "err", err)
 		return err
 	}
 	level.Info(r.log).Log("msg", "events marked as published", "count", len(events))

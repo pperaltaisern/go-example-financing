@@ -36,6 +36,38 @@ func (m *MockEventStore) ContainsAggregate(ctx context.Context, t AggregateType,
 	return m.ContainsAggregateFn(ctx, t, id)
 }
 
+type MockAggregate struct {
+	IDFn             func() ID
+	InitialVersionFn func() int
+	ChangesFn        func() []Event
+	SnapshotFn       func() ([]byte, error)
+}
+
+func (m *MockAggregate) ID() ID {
+	return m.IDFn()
+}
+func (m *MockAggregate) InitialVersion() int {
+	return m.InitialVersionFn()
+}
+func (m *MockAggregate) Changes() []Event {
+	return m.ChangesFn()
+}
+func (m *MockAggregate) Snapshot() ([]byte, error) {
+	return m.SnapshotFn()
+}
+
+type MockAggregateFactory[T Aggregate] struct {
+	NewAggregateFromSnapshotAndEventsFn func(RawSnapshot, []Event) (T, error)
+	NewAggregateFromEventsFn            func([]Event) (T, error)
+}
+
+func (m *MockAggregateFactory[T]) NewAggregateFromSnapshotAndEvents(snapshot RawSnapshot, events []Event) (T, error) {
+	return m.NewAggregateFromSnapshotAndEventsFn(snapshot, events)
+}
+func (m *MockAggregateFactory[T]) NewAggregateFromEvents(events []Event) (T, error) {
+	return m.NewAggregateFromEventsFn(events)
+}
+
 type MockEvent struct {
 	EventNameFn func() string
 }

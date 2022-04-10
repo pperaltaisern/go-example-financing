@@ -15,12 +15,17 @@ type InvestorRepository interface {
 type UpdateInvestor func(inv *Investor) error
 
 type investorRepository struct {
-	r *esrc.Repository
+	r *esrc.Repository[*Investor]
 }
 
 func NewInvestorRepository(es esrc.EventStore) InvestorRepository {
 	return investorRepository{
-		r: esrc.NewRepository("investor", es, investorEventsFactory{}, esrc.JSONEventMarshaler{}),
+		r: esrc.NewRepository[*Investor](
+			"investor",
+			investorFactory{},
+			es,
+			investorEventsFactory{},
+			esrc.JSONEventMarshaler{}),
 	}
 }
 
@@ -56,17 +61,13 @@ func (r investorRepository) Update(ctx context.Context, id ID, update UpdateInve
 		return err
 	}
 
-	return r.r.Update(ctx, id, inv.aggregate.Version(), inv.aggregate.Events())
+	return r.r.Update(ctx, inv)
 }
 
 func (r investorRepository) byID(ctx context.Context, id ID) (*Investor, error) {
-	events, err := r.r.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return newInvestorFromEvents(events), nil
+	return r.r.FindByID(ctx, id)
 }
 
 func (r investorRepository) Add(ctx context.Context, inv *Investor) error {
-	return r.r.Add(ctx, inv.id, inv.aggregate.Events())
+	return r.r.Add(ctx, inv)
 }

@@ -1,37 +1,38 @@
 package financing
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/pperaltaisern/financing/internal/esrc"
 )
 
 type Investor struct {
-	aggregate esrc.Aggregate
+	esrc.EventRaiserAggregate
 
 	id       ID
 	balance  Money
 	reserved Money
 }
 
+var _ esrc.Aggregate = (*Investor)(nil)
+
 func NewInvestor(id ID) *Investor {
 	inv := &Investor{}
-	inv.aggregate = esrc.NewAggregate(inv.onEvent)
+	inv.EventRaiserAggregate = esrc.NewEventRaiserAggregate(inv.onEvent)
 
 	e := NewInvestorCreatedEvent(id)
-	inv.aggregate.Raise(e)
+	inv.Raise(e)
 	return inv
 }
 
-func newInvestorFromEvents(events []esrc.Event) *Investor {
-	inv := &Investor{}
-	inv.aggregate = esrc.NewAggregateFromEvents(events, inv.onEvent)
-	return inv
+func (inv *Investor) ID() esrc.ID {
+	return inv.id
 }
 
 func (inv *Investor) AddFunds(amount Money) {
 	e := NewInvestorFundsAddedEvent(inv.id, amount)
-	inv.aggregate.Raise(e)
+	inv.Raise(e)
 }
 
 var ErrNotEnoughtBalance = errors.New("there isn't enough balance")
@@ -44,7 +45,7 @@ func (inv *Investor) BidOnInvoice(invoiceID ID, amount Money) error {
 		return ErrNotEnoughtBalance
 	}
 	e := NewBidOnInvoicePlacedEvent(inv.id, invoiceID, amount)
-	inv.aggregate.Raise(e)
+	inv.Raise(e)
 	return nil
 }
 
@@ -58,7 +59,7 @@ func (inv *Investor) ReleaseFunds(amount Money) error {
 		return ErrNotEnoughReservedFunds
 	}
 	e := NewInvestorFundsReleasedEvent(inv.id, amount)
-	inv.aggregate.Raise(e)
+	inv.Raise(e)
 	return nil
 }
 
@@ -70,7 +71,7 @@ func (inv *Investor) CommitFunds(amount Money) error {
 		return ErrNotEnoughReservedFunds
 	}
 	e := NewInvestorFundsCommittedEvent(inv.id, amount)
-	inv.aggregate.Raise(e)
+	inv.Raise(e)
 	return nil
 }
 
@@ -113,4 +114,43 @@ func (inv *Investor) onEvent(event esrc.Event) {
 	case *InvestorFundsCommittedEvent:
 		inv.commitFunds(e.Amount)
 	}
+}
+
+func (inv *Investor) Snapshot() ([]byte, error) {
+	return json.Marshal(investorSnapshot{
+		ID:       inv.id,
+		Balance:  inv.balance,
+		Reserved: inv.reserved,
+	})
+}
+
+type investorSnapshot struct {
+	ID       ID
+	Balance  Money
+	Reserved Money
+}
+type investorFactory struct{}
+
+var _ esrc.AggregateFactory[*Investor] = (*investorFactory)(nil)
+
+func (investorFactory) NewAggregateFromSnapshotAndEvents(snapshot esrc.RawSnapshot, events []esrc.Event) (*Investor, error) {
+	var invSnapshot investorSnapshot
+	err := json.Unmarshal(snapshot.Data, &invSnapshot)
+	if err != nil {
+		return nil, err
+	}
+
+	inv := &Investor{
+		id:       invSnapshot.ID,
+		balance:  invSnapshot.Balance,
+		reserved: invSnapshot.Reserved,
+	}
+	inv.EventRaiserAggregate = esrc.NewEventRaiserAggregateFromEvents(snapshot.Version, events, inv.onEvent)
+	return inv, nil
+}
+
+func (investorFactory) NewAggregateFromEvents(events []esrc.Event) (*Investor, error) {
+	inv := &Investor{}
+	inv.EventRaiserAggregate = esrc.NewEventRaiserAggregateFromEvents(0, events, inv.onEvent)
+	return inv, nil
 }

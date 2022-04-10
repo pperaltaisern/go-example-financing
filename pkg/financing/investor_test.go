@@ -14,8 +14,8 @@ func TestNewInvestor(t *testing.T) {
 	assertNewInvestor(t, inv, id)
 
 	e := NewInvestorCreatedEvent(id)
-	require.Equal(t, e, inv.aggregate.Events()[0])
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Equal(t, e, inv.Changes()[0])
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func TestNewInvestorFromEvents(t *testing.T) {
@@ -25,8 +25,8 @@ func TestNewInvestorFromEvents(t *testing.T) {
 	inv := newInvestorFromEvents([]esrc.Event{e})
 	assertNewInvestor(t, inv, id)
 
-	require.Empty(t, inv.aggregate.Events())
-	require.Equal(t, 1, inv.aggregate.Version())
+	require.Empty(t, inv.Changes())
+	require.Equal(t, 1, inv.InitialVersion())
 }
 
 func assertNewInvestor(t *testing.T, inv *Investor, id ID) {
@@ -43,8 +43,8 @@ func TestInvestor_AddFunds(t *testing.T) {
 	require.Equal(t, Money(0), inv.reserved)
 
 	e := NewInvestorFundsAddedEvent(inv.id, 100)
-	require.Equal(t, e, inv.aggregate.Events()[1])
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Equal(t, e, inv.Changes()[1])
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func TestInvestor_BidOnInvoice(t *testing.T) {
@@ -68,8 +68,8 @@ func TestInvestor_BidOnInvoice(t *testing.T) {
 			require.Equal(t, tc.bidAmount, inv.reserved)
 
 			e := NewBidOnInvoicePlacedEvent(inv.id, invoiceID, tc.bidAmount)
-			require.Equal(t, e, inv.aggregate.Events()[2])
-			require.Equal(t, 0, inv.aggregate.Version())
+			require.Equal(t, e, inv.Changes()[2])
+			require.Equal(t, 0, inv.InitialVersion())
 		})
 	}
 }
@@ -85,8 +85,8 @@ func TestInvestor_BidOnInvoice_Zero(t *testing.T) {
 	require.Equal(t, balance, inv.balance)
 	require.Equal(t, Money(0), inv.reserved)
 
-	require.Len(t, inv.aggregate.Events(), 2)
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Len(t, inv.Changes(), 2)
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func TestInvestor_BidOnInvoice_Negative(t *testing.T) {
@@ -100,8 +100,8 @@ func TestInvestor_BidOnInvoice_Negative(t *testing.T) {
 	require.Equal(t, balance, inv.balance)
 	require.Equal(t, Money(0), inv.reserved)
 
-	require.Len(t, inv.aggregate.Events(), 2)
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Len(t, inv.Changes(), 2)
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func TestInvestor_BidOnInvoice_HasNotEnoughBalance(t *testing.T) {
@@ -115,8 +115,8 @@ func TestInvestor_BidOnInvoice_HasNotEnoughBalance(t *testing.T) {
 	require.Equal(t, balance, inv.balance)
 	require.Equal(t, Money(0), inv.reserved)
 
-	require.Len(t, inv.aggregate.Events(), 2)
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Len(t, inv.Changes(), 2)
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func testNewInvestorWithBalance(balance Money) *Investor {
@@ -146,8 +146,8 @@ func TestInvestor_ReleaseFunds(t *testing.T) {
 			require.Equal(t, initialFunds-tc.amountReleased, inv.reserved)
 
 			e := NewInvestorFundsReleasedEvent(inv.id, tc.amountReleased)
-			require.Equal(t, e, inv.aggregate.Events()[3])
-			require.Equal(t, 0, inv.aggregate.Version())
+			require.Equal(t, e, inv.Changes()[3])
+			require.Equal(t, 0, inv.InitialVersion())
 		})
 	}
 }
@@ -162,8 +162,8 @@ func TestInvesto_ReleaseFunds_Zero(t *testing.T) {
 	require.Equal(t, Money(0), inv.balance)
 	require.Equal(t, initialFunds, inv.reserved)
 
-	require.Len(t, inv.aggregate.Events(), 3)
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Len(t, inv.Changes(), 3)
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func TestInvestor_ReleaseFunds_Negative(t *testing.T) {
@@ -176,8 +176,8 @@ func TestInvestor_ReleaseFunds_Negative(t *testing.T) {
 	require.Equal(t, Money(0), inv.balance)
 	require.Equal(t, initialFunds, inv.reserved)
 
-	require.Len(t, inv.aggregate.Events(), 3)
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Len(t, inv.Changes(), 3)
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func TestInvestor_ReleaseFunds_HasNotEnoughFundsReserved(t *testing.T) {
@@ -190,8 +190,8 @@ func TestInvestor_ReleaseFunds_HasNotEnoughFundsReserved(t *testing.T) {
 	require.Equal(t, Money(0), inv.balance)
 	require.Equal(t, initialFunds, inv.reserved)
 
-	require.Len(t, inv.aggregate.Events(), 3)
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Len(t, inv.Changes(), 3)
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func TestInvestor_CommitFunds(t *testing.T) {
@@ -215,8 +215,8 @@ func TestInvestor_CommitFunds(t *testing.T) {
 			require.Equal(t, initialFunds-tc.amountCommitted, inv.reserved)
 
 			e := NewInvestorFundsCommittedEvent(inv.id, tc.amountCommitted)
-			require.Equal(t, e, inv.aggregate.Events()[3])
-			require.Equal(t, 0, inv.aggregate.Version())
+			require.Equal(t, e, inv.Changes()[3])
+			require.Equal(t, 0, inv.InitialVersion())
 		})
 	}
 }
@@ -231,8 +231,8 @@ func TestInvesto_CommitFunds_Zero(t *testing.T) {
 	require.Equal(t, Money(0), inv.balance)
 	require.Equal(t, initialFunds, inv.reserved)
 
-	require.Len(t, inv.aggregate.Events(), 3)
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Len(t, inv.Changes(), 3)
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func TestInvestor_CommitFunds_Negative(t *testing.T) {
@@ -245,8 +245,8 @@ func TestInvestor_CommitFunds_Negative(t *testing.T) {
 	require.Equal(t, Money(0), inv.balance)
 	require.Equal(t, initialFunds, inv.reserved)
 
-	require.Len(t, inv.aggregate.Events(), 3)
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Len(t, inv.Changes(), 3)
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func TestInvestor_CommmitFunds_HasNotEnoughFundsReserved(t *testing.T) {
@@ -259,8 +259,8 @@ func TestInvestor_CommmitFunds_HasNotEnoughFundsReserved(t *testing.T) {
 	require.Equal(t, Money(0), inv.balance)
 	require.Equal(t, initialFunds, inv.reserved)
 
-	require.Len(t, inv.aggregate.Events(), 3)
-	require.Equal(t, 0, inv.aggregate.Version())
+	require.Len(t, inv.Changes(), 3)
+	require.Equal(t, 0, inv.InitialVersion())
 }
 
 func testNewInvestorWithBalanceAndReserved(t *testing.T, balance, reserved Money) *Investor {
