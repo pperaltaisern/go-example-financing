@@ -12,12 +12,12 @@ type IssuerRepository interface {
 }
 
 type issuerRepository struct {
-	r *esrc.Repository
+	r *esrc.Repository[*Issuer]
 }
 
 func NewIssuerRepository(es esrc.EventStore) IssuerRepository {
 	return issuerRepository{
-		r: esrc.NewRepository("issuer", es, nil, esrc.JSONEventMarshaler{}),
+		r: esrc.NewRepository[*Issuer](es, nil, nil),
 	}
 }
 
@@ -26,5 +26,5 @@ func (r issuerRepository) Contains(ctx context.Context, id ID) (bool, error) {
 }
 
 func (r issuerRepository) Add(ctx context.Context, iss *Issuer) error {
-	return r.r.Add(ctx, iss.id, iss.aggregate.Events())
+	return r.r.Add(ctx, iss)
 }

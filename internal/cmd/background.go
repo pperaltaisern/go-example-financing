@@ -24,6 +24,7 @@ func NewBackground(cmd Command, opts ...BackgroundOption) *Background {
 	c := &Background{
 		command:                    cmd,
 		interval:                   time.Millisecond * 200,
+		log:                        log.NewNopLogger(),
 		executionsCounter:          discard.NewCounter(),
 		executionDurationHistogram: discard.NewHistogram(),
 	}

@@ -22,7 +22,8 @@ func TestNewInvestorFromEvents(t *testing.T) {
 	id := NewID()
 	e := NewInvestorCreatedEvent(id)
 
-	inv := newInvestorFromEvents([]esrc.Event{e})
+	inv, err := investorFactory{}.NewAggregateFromEvents([]esrc.Event{e})
+	require.NoError(t, err)
 	assertNewInvestor(t, inv, id)
 
 	require.Empty(t, inv.Changes())
@@ -33,6 +34,31 @@ func assertNewInvestor(t *testing.T, inv *Investor, id ID) {
 	require.Equal(t, id, inv.id)
 	require.Equal(t, Money(0), inv.balance)
 	require.Equal(t, Money(0), inv.reserved)
+}
+
+func TestNewInvestorFromSnapshotAndEvents(t *testing.T) {
+	id := NewID()
+	inv := NewInvestor(id)
+	inv.AddFunds(100)
+	inv.BidOnInvoice(NewID(), 40)
+
+	snapshot, err := inv.Snapshot()
+	require.NoError(t, err)
+
+	rawSnapshot := esrc.RawSnapshot{
+		Version: len(inv.Changes()),
+		Data:    snapshot,
+	}
+
+	invFromSnapshot, err := investorFactory{}.NewAggregateFromSnapshotAndEvents(rawSnapshot, nil)
+	require.NoError(t, err)
+
+	require.Equal(t, id, invFromSnapshot.id)
+	require.Equal(t, Money(60), invFromSnapshot.balance)
+	require.Equal(t, Money(40), invFromSnapshot.reserved)
+
+	require.Empty(t, invFromSnapshot.Changes())
+	require.Equal(t, rawSnapshot.Version, invFromSnapshot.InitialVersion())
 }
 
 func TestInvestor_AddFunds(t *testing.T) {

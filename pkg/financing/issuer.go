@@ -3,23 +3,23 @@ package financing
 import "github.com/pperaltaisern/financing/internal/esrc"
 
 type Issuer struct {
-	aggregate esrc.Aggregate
-	id        ID
+	esrc.EventRaiserAggregate
+	id ID
 }
 
 func NewIssuer(id ID) *Issuer {
 	inv := &Issuer{}
-	inv.aggregate = esrc.NewAggregate(inv.onEvent)
+	inv.EventRaiserAggregate = esrc.NewEventRaiserAggregate(inv.onEvent)
 
 	e := NewIssuerCreatedEvent(id)
-	inv.aggregate.Raise(e)
+	inv.Raise(e)
 	return inv
 }
 
-func newIssuerFromEvents(events []esrc.Event) *Issuer {
-	inv := &Issuer{}
-	inv.aggregate = esrc.NewAggregateFromEvents(events, inv.onEvent)
-	return inv
+var _ esrc.Aggregate = (*Issuer)(nil)
+
+func (iss *Issuer) ID() esrc.ID {
+	return iss.id
 }
 
 func (iss *Issuer) onEvent(event esrc.Event) {
@@ -27,4 +27,8 @@ func (iss *Issuer) onEvent(event esrc.Event) {
 	case *IssuerCreatedEvent:
 		iss.id = e.IssuerID
 	}
+}
+
+func (iss *Issuer) Snapshot() ([]byte, error) {
+	return nil, nil
 }

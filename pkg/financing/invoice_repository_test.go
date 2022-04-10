@@ -20,9 +20,13 @@ func TestInvoiceRepository_Update(t *testing.T) {
 
 	var calls int
 	es := &esrc.MockEventStore{
-		AddAggregateFn: func(ctx context.Context, t esrc.AggregateType, id esrc.ID) ([]esrc.RawEvent, error) {
+		EventsFn: func(ctx context.Context, at esrc.AggregateType, i1 esrc.ID, i2 int) ([]esrc.RawEvent, error) {
 			calls++
 			return rawEvents, nil
+		},
+		LatestSnapshotFn: func(ctx context.Context, at esrc.AggregateType, i esrc.ID) (*esrc.RawSnapshot, error) {
+			calls += 2
+			return nil, nil
 		},
 		AppendEventsFn: func(ctx context.Context, _ esrc.AggregateType, id esrc.ID, fromVersion int, events []esrc.RawEvent) error {
 			calls += 10
@@ -40,5 +44,5 @@ func TestInvoiceRepository_Update(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, 11, calls)
+	require.Equal(t, 13, calls)
 }

@@ -2,7 +2,6 @@ package financing
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pperaltaisern/financing/internal/esrc"
 )
@@ -15,34 +14,13 @@ type InvoiceRepository interface {
 type UpdateInvoice func(inv *Invoice) error
 
 type invoiceRepository struct {
-	r *esrc.Repository
+	r *esrc.Repository[*Invoice]
 }
 
-func NewInvoiceRepository(es esrc.EventStore) InvoiceRepository {
+func NewInvoiceRepository(es esrc.EventStore, opts ...esrc.RepositoryOption[*Invoice]) InvoiceRepository {
 	return invoiceRepository{
-		r: esrc.NewRepository("invoice", es, invoiceEventsFactory{}, esrc.JSONEventMarshaler{}),
+		r: esrc.NewRepository[*Invoice](es, invoiceFactory{}, invoiceEventsFactory{}, opts...),
 	}
-}
-
-type invoiceEventsFactory struct{}
-
-func (invoiceEventsFactory) CreateEmptyEvent(name string) (esrc.Event, error) {
-	var e esrc.Event
-	switch name {
-	case "InvoiceCreatedEvent":
-		e = &InvoiceCreatedEvent{}
-	case "InvoiceFinancedEvent":
-		e = &InvoiceFinancedEvent{}
-	case "InvoiceReversedEvent":
-		e = &InvoiceReversedEvent{}
-	case "BidOnInvoicePlacedEvent":
-		e = &BidOnInvoicePlacedEvent{}
-	case "InvoiceApprovedEvent":
-		e = &InvoiceApprovedEvent{}
-	default:
-		return nil, fmt.Errorf("unkown event name: %s", name)
-	}
-	return e, nil
 }
 
 func (r invoiceRepository) Update(ctx context.Context, id ID, update UpdateInvoice) error {
@@ -56,17 +34,13 @@ func (r invoiceRepository) Update(ctx context.Context, id ID, update UpdateInvoi
 		return err
 	}
 
-	return r.r.Update(ctx, id, inv.aggregate.Version(), inv.aggregate.Events())
+	return r.r.Update(ctx, inv)
 }
 
 func (r invoiceRepository) byID(ctx context.Context, id ID) (*Invoice, error) {
-	events, err := r.r.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return newInvoiceFromEvents(events), nil
+	return r.r.FindByID(ctx, id)
 }
 
 func (r invoiceRepository) Add(ctx context.Context, inv *Invoice) error {
-	return r.r.Add(ctx, inv.id, inv.aggregate.Events())
+	return r.r.Add(ctx, inv)
 }

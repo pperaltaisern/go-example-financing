@@ -1,11 +1,13 @@
 package financing
 
 import (
+	"encoding/json"
+
 	"github.com/pperaltaisern/financing/internal/esrc"
 )
 
 type Invoice struct {
-	aggregate esrc.Aggregate
+	esrc.EventRaiserAggregate
 
 	id          ID
 	issuerID    ID
@@ -25,28 +27,28 @@ const (
 
 func NewInvoice(id, issuerID ID, askingPrice Money) *Invoice {
 	inv := &Invoice{}
-	inv.aggregate = esrc.NewAggregate(inv.onEvent)
+	inv.EventRaiserAggregate = esrc.NewEventRaiserAggregate(inv.onEvent)
 
 	e := NewInvoiceCreatedEvent(id, issuerID, askingPrice)
-	inv.aggregate.Raise(e)
+	inv.Raise(e)
 	return inv
 }
 
-func newInvoiceFromEvents(events []esrc.Event) *Invoice {
-	inv := &Invoice{}
-	inv.aggregate = esrc.NewAggregateFromEvents(events, inv.onEvent)
-	return inv
+var _ esrc.Aggregate = (*Invoice)(nil)
+
+func (inv *Invoice) ID() esrc.ID {
+	return inv.id
 }
 
 func (inv *Invoice) ProcessBid(bid Bid) {
 	if inv.status != invoiceStatusAvailable || !inv.isMatchingBid(bid) {
 		e := NewBidOnInvoiceRejectedEvent(inv.id, bid)
-		inv.aggregate.Raise(e)
+		inv.Raise(e)
 		return
 	}
 
 	e := NewInvoiceFinancedEvent(inv.id, inv.askingPrice, bid)
-	inv.aggregate.Raise(e)
+	inv.Raise(e)
 }
 
 func (inv *Invoice) isMatchingBid(bid Bid) bool {
@@ -72,7 +74,7 @@ func (inv *Invoice) ReverseFinancing() {
 	}
 
 	e := NewInvoiceReversedEvent(inv.id, inv.askingPrice, *inv.winningBid)
-	inv.aggregate.Raise(e)
+	inv.Raise(e)
 }
 
 func (inv *Invoice) ApproveFinancing() {
@@ -81,7 +83,7 @@ func (inv *Invoice) ApproveFinancing() {
 	}
 
 	e := NewInvoiceApprovedEvent(inv.id, inv.askingPrice, *inv.winningBid)
-	inv.aggregate.Raise(e)
+	inv.Raise(e)
 }
 
 func (inv *Invoice) onEvent(event esrc.Event) {
@@ -98,4 +100,22 @@ func (inv *Invoice) onEvent(event esrc.Event) {
 	case *InvoiceApprovedEvent:
 		inv.approve()
 	}
+}
+
+func (inv *Invoice) Snapshot() ([]byte, error) {
+	return json.Marshal(invoiceSnapshot{
+		ID:          inv.id,
+		IssuerID:    inv.issuerID,
+		AskingPrice: inv.askingPrice,
+		Status:      inv.status,
+		WinningBid:  inv.winningBid,
+	})
+}
+
+type invoiceSnapshot struct {
+	ID          ID
+	IssuerID    ID
+	AskingPrice Money
+	Status      invoiceStatus
+	WinningBid  *Bid
 }
