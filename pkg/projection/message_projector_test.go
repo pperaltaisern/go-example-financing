@@ -5,7 +5,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/pperaltaisern/financing/internal/esrc/esrcwatermill"
+	"github.com/pperaltaisern/esrcwatermill"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/stretchr/testify/require"
 )

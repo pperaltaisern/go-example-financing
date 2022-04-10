@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
-	"github.com/pperaltaisern/financing/internal/esrc"
-	"github.com/pperaltaisern/financing/internal/esrc/relay"
+	"github.com/pperaltaisern/esrc"
+	"github.com/pperaltaisern/esrc/relay"
 	"github.com/pperaltaisern/financing/pkg/config"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/grpc/pb"

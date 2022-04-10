@@ -7,10 +7,10 @@ import (
 	"time"
 
 	kitzap "github.com/go-kit/kit/log/zap"
-	"github.com/pperaltaisern/financing/internal/cmd"
-	"github.com/pperaltaisern/financing/internal/esrc/esrcpg"
-	"github.com/pperaltaisern/financing/internal/esrc/esrcwatermill"
-	"github.com/pperaltaisern/financing/internal/esrc/relay"
+	"github.com/pperaltaisern/app"
+	"github.com/pperaltaisern/esrc/relay"
+	"github.com/pperaltaisern/esrcpg"
+	"github.com/pperaltaisern/esrcwatermill"
 	"github.com/pperaltaisern/financing/pkg/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -26,7 +26,7 @@ func main() {
 	}
 
 	relayCmd := relayCommand(log)
-	bgRelay := cmd.NewBackground(relayCmd, cmd.BackgroundWithInterval(200*time.Millisecond))
+	bgRelay := app.NewBackgroundCommand(relayCmd, app.BackgroundCommandWithInterval(200*time.Millisecond))
 
 	errC := make(chan error, 1)
 	go func() {
@@ -57,6 +57,6 @@ func relayCommand(log *zap.Logger) *relay.Command {
 	return relay.NewCommand(
 		esrcpg.NewEventStoreOutbox(pool),
 		esrcwatermill.NewPublisher(bus),
-		relay.CommandWithLogger(kitzap.NewZapSugarLogger(log, zapcore.DebugLevel)),
+		relay.CommandWithLogger(kitzap.NewZapSugarLogger(log, zapcore.InfoLevel)),
 	)
 }

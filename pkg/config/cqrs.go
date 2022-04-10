@@ -4,13 +4,13 @@ import (
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
-	"github.com/pperaltaisern/financing/internal/esrc"
-	"github.com/pperaltaisern/financing/internal/esrc/esrcwatermill"
-	"github.com/pperaltaisern/financing/internal/watermillzap"
+	"github.com/pperaltaisern/esrc"
+	"github.com/pperaltaisern/esrcwatermill"
 	"github.com/pperaltaisern/financing/pkg/command"
 	"github.com/pperaltaisern/financing/pkg/eventhandler"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/intevent"
+	"github.com/pperaltaisern/watermillzap"
 	"go.uber.org/zap"
 )
 

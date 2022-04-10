@@ -1,6 +1,6 @@
 package financing
 
-import "github.com/pperaltaisern/financing/internal/esrc"
+import "github.com/pperaltaisern/esrc"
 
 type Issuer struct {
 	esrc.EventRaiserAggregate

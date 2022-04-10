@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/pperaltaisern/financing/internal/esrc"
+	"github.com/pperaltaisern/esrc"
 
 	"github.com/stretchr/testify/require"
 )

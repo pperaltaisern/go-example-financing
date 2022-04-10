@@ -3,7 +3,7 @@ package financing
 import (
 	"fmt"
 
-	"github.com/pperaltaisern/financing/internal/esrc"
+	"github.com/pperaltaisern/esrc"
 )
 
 type investorEventsFactory struct{}

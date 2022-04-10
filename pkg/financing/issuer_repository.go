@@ -3,7 +3,7 @@ package financing
 import (
 	"context"
 
-	"github.com/pperaltaisern/financing/internal/esrc"
+	"github.com/pperaltaisern/esrc"
 )
 
 type IssuerRepository interface {

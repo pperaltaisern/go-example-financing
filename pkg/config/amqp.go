@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/ThreeDotsLabs/watermill-amqp/pkg/amqp"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
-	"github.com/pperaltaisern/financing/internal/watermillzap"
+	"github.com/pperaltaisern/watermillzap"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )

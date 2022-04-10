@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/pperaltaisern/financing/internal/esrc"
-	"github.com/pperaltaisern/financing/internal/esrc/esrcpg"
+	"github.com/pperaltaisern/esrc"
+	"github.com/pperaltaisern/esrcpg"
 	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"

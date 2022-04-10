@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/pperaltaisern/financing/internal/esrc"
+	"github.com/pperaltaisern/esrc"
 )
 
 type Investor struct {

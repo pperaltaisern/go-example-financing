@@ -3,7 +3,7 @@ package financing
 import (
 	"encoding/json"
 
-	"github.com/pperaltaisern/financing/internal/esrc"
+	"github.com/pperaltaisern/esrc"
 )
 
 type invoiceFactory struct{}
