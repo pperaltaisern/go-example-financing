@@ -43,7 +43,7 @@ func main() {
 			log.Error("projection err", zap.Error(e), zap.Any("message", m))
 		})
 
-	eventHandler := NewProjectorSubscriber(subscriber, messageProjector)
+	projectorSubscriber := NewProjectorSubscriber(subscriber, messageProjector)
 
 	errC := make(chan error, 2)
 	go func() {
@@ -52,11 +52,11 @@ func main() {
 		errC <- fmt.Errorf("%s", <-c)
 	}()
 
-	go func() { errC <- eventHandler.Run() }()
+	go func() { errC <- projectorSubscriber.Run() }()
 
 	log.Info("ready")
 	log.Info("terminated", zap.Error(<-errC))
-	eventHandler.Stop()
+	projectorSubscriber.Stop()
 	log.Info("closed gracefully")
 }
 
