@@ -1,8 +1,10 @@
 # go-example-financing
 
-This is an example on how to build event sourced and CQRS applications in go.
-- Event sourcing library: esrc (https://github.com/pperaltaisern/esrc)
-- CQRS library: watermill (https://github.com/ThreeDotsLabs/watermill)
+This example project aims to demonstrate or serve as inspiration on how to build an event driven architecture using the event sourced and CQRS patterns in go. Enabled by two key libraries:
+- "esrc" which enables Event Sourcing (https://github.com/pperaltaisern/esrc)
+- "watermill" which enables CQRS and messaging (https://github.com/ThreeDotsLabs/watermill)
+
+The domain used as example is responsible to register Issuers that can put Invoices on sold, and Investors that can finance Invoices. The domain is splitted in two bounded contexts: Registering and Financing. This example focus on the later, where it has to synchronize with registrations via integration events, and must handle Invoice finantiation and Investors' balances. 
 
 ## Architecture
 ![](doc/architecture.jpg)
