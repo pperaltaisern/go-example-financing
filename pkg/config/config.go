@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -73,4 +74,15 @@ func (c LoggerConfig) Build() (*zap.Logger, error) {
 	}
 
 	return zc.Build()
+}
+
+func Wait() {
+	ms := viper.GetDuration("WAIT")
+	if ms > 0 {
+		time.Sleep(time.Duration(ms) * time.Millisecond)
+	}
+}
+
+func PublishIntegrationEvents() bool {
+	return viper.GetBool("PUBLISH_INTEGRATION_EVENTS")
 }

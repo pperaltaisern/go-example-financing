@@ -7,11 +7,8 @@ import (
 	"os/signal"
 
 	"github.com/pperaltaisern/financing/pkg/config"
-	"github.com/pperaltaisern/financing/pkg/financing"
 	"github.com/pperaltaisern/financing/pkg/grpc"
-	"github.com/pperaltaisern/financing/pkg/intevent"
 
-	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"go.uber.org/zap"
 )
@@ -55,10 +52,6 @@ func main() {
 
 	m.Run(errC)
 
-	if false {
-		PublishTestIntegrationEvents(cqrsFacade.EventBus())
-	}
-
 	log.Info("ready")
 	log.Info("terminated", zap.Error(<-errC))
 	m.Close()
@@ -83,23 +76,4 @@ func (m *Main) Close() {
 	}
 	m.commandServer.Close()
 	m.log.Sync()
-}
-
-func PublishTestIntegrationEvents(bus *cqrs.EventBus) {
-	for i := 0; i < 5; i++ {
-		issuerCreated := intevent.IssuerRegistered{
-			ID:   financing.NewID(),
-			Name: fmt.Sprintf("ISSUER_%v", i+1),
-		}
-		bus.Publish(context.Background(), issuerCreated)
-	}
-
-	for i := 0; i < 5; i++ {
-		investorCreated := intevent.InvestorRegistered{
-			ID:      financing.NewID(),
-			Name:    fmt.Sprintf("INVESTOR_%v", i+1),
-			Balance: financing.Money(100),
-		}
-		bus.Publish(context.Background(), investorCreated)
-	}
 }

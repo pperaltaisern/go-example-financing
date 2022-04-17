@@ -17,16 +17,18 @@ type QueryServer struct {
 	server           *grpc.Server
 	investors        query.InvestorQueries
 	invoices         query.InvoiceQueries
+	issuers          query.IssuerQueries
 	pb.UnimplementedQueriesServer
 }
 
-func NewQueryServer(network, address string, investors query.InvestorQueries, invoices query.InvoiceQueries) *QueryServer {
+func NewQueryServer(network, address string, investors query.InvestorQueries, invoices query.InvoiceQueries, issuers query.IssuerQueries) *QueryServer {
 	s := &QueryServer{
 		network:   network,
 		address:   address,
 		server:    grpc.NewServer(),
 		investors: investors,
 		invoices:  invoices,
+		issuers:   issuers,
 	}
 	pb.RegisterQueriesServer(s.server, s)
 	reflection.Register(s.server)
@@ -90,5 +92,22 @@ func (s *QueryServer) AllInvoices(context.Context, *emptypb.Empty) (*pb.AllInvoi
 
 	return &pb.AllInvoicesReply{
 		Invoices: pbInvoices,
+	}, nil
+}
+
+func (s *QueryServer) AllIssuers(context.Context, *emptypb.Empty) (*pb.AllIssuersReply, error) {
+	issuers, err := s.issuers.All()
+	if err != nil {
+		return nil, err
+	}
+	pbIssuers := make([]*pb.Issuer, len(issuers))
+	for i, issuer := range issuers {
+		pbIssuers[i] = &pb.Issuer{
+			Id: ConvertID(issuer.ID),
+		}
+	}
+
+	return &pb.AllIssuersReply{
+		Issuers: pbIssuers,
 	}, nil
 }

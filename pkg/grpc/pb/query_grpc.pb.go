@@ -25,6 +25,7 @@ const _ = grpc.SupportPackageIsVersion7
 type QueriesClient interface {
 	AllInvestors(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AllInvestorsReply, error)
 	AllInvoices(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AllInvoicesReply, error)
+	AllIssuers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AllIssuersReply, error)
 }
 
 type queriesClient struct {
@@ -53,12 +54,22 @@ func (c *queriesClient) AllInvoices(ctx context.Context, in *emptypb.Empty, opts
 	return out, nil
 }
 
+func (c *queriesClient) AllIssuers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AllIssuersReply, error) {
+	out := new(AllIssuersReply)
+	err := c.cc.Invoke(ctx, "/Queries/AllIssuers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueriesServer is the server API for Queries service.
 // All implementations must embed UnimplementedQueriesServer
 // for forward compatibility
 type QueriesServer interface {
 	AllInvestors(context.Context, *emptypb.Empty) (*AllInvestorsReply, error)
 	AllInvoices(context.Context, *emptypb.Empty) (*AllInvoicesReply, error)
+	AllIssuers(context.Context, *emptypb.Empty) (*AllIssuersReply, error)
 	mustEmbedUnimplementedQueriesServer()
 }
 
@@ -71,6 +82,9 @@ func (UnimplementedQueriesServer) AllInvestors(context.Context, *emptypb.Empty) 
 }
 func (UnimplementedQueriesServer) AllInvoices(context.Context, *emptypb.Empty) (*AllInvoicesReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AllInvoices not implemented")
+}
+func (UnimplementedQueriesServer) AllIssuers(context.Context, *emptypb.Empty) (*AllIssuersReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllIssuers not implemented")
 }
 func (UnimplementedQueriesServer) mustEmbedUnimplementedQueriesServer() {}
 
@@ -121,6 +135,24 @@ func _Queries_AllInvoices_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Queries_AllIssuers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueriesServer).AllIssuers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Queries/AllIssuers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueriesServer).AllIssuers(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Queries_ServiceDesc is the grpc.ServiceDesc for Queries service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -135,6 +167,10 @@ var Queries_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AllInvoices",
 			Handler:    _Queries_AllInvoices_Handler,
+		},
+		{
+			MethodName: "AllIssuers",
+			Handler:    _Queries_AllIssuers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

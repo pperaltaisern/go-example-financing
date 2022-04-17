@@ -9,6 +9,7 @@ option go_package = "../pkg/grpc/pb";
 service Queries {
     rpc AllInvestors(google.protobuf.Empty) returns (AllInvestorsReply);
     rpc AllInvoices(google.protobuf.Empty) returns (AllInvoicesReply);
+    rpc AllIssuers(google.protobuf.Empty) returns (AllIssuersReply);
 }
 
 message AllInvestorsReply {
@@ -44,4 +45,12 @@ enum InvoiceStatus {
 message Bid {
 	UUID investor_id = 1;
 	Money amount = 2;
+}
+
+message AllIssuersReply {
+    repeated Issuer issuers = 1;
+}
+
+message Issuer {
+	UUID id = 1;
 }

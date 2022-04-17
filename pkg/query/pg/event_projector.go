@@ -19,6 +19,7 @@ var tables = []interface{}{
 	&Investor{},
 	&Invoice{},
 	&query.Bid{},
+	&Issuer{},
 }
 
 func NewEventProjector(db *gorm.DB) (*EventProjector, error) {
@@ -129,7 +130,13 @@ func (c *EventProjector) ProjectInvoiceApprovedEvent(e *financing.InvoiceApprove
 	})
 }
 func (c *EventProjector) ProjectIssuerCreatedEvent(e *financing.IssuerCreatedEvent) error {
-	return nil
+	issuer := &Issuer{
+		Issuer: query.Issuer{
+			ID: e.IssuerID,
+		},
+	}
+	tx := c.db.Create(issuer)
+	return tx.Error
 }
 
 func updateInvestor(tx *gorm.DB, id financing.ID, investorUpdate func(investor *Investor)) *gorm.DB {

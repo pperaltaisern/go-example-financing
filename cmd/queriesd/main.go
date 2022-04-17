@@ -34,6 +34,7 @@ func main() {
 			serverConfig.Address,
 			pg.NewInvestorQueries(db),
 			pg.NewInvoiceQueries(db),
+			pg.NewIssuerQueries(db),
 		),
 	}
 
