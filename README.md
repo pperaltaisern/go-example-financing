@@ -12,10 +12,22 @@ The domain used as example is responsible to register Issuers that can put Invoi
 ## Acceptance criteria
 
 ## Demo
-
 ![](doc/demo.gif)
 
-## DB state
+### DB state
+To put some visualization on the difference between the state of the "Event Store" vs the state of the "Projection DB", there are some snapshots of the aggregates showed in the demo:
+
+- Invoice in Event Store:
+> ![EventStore](doc/ES_invoice.png)
+
+- Invoice in Projection DB:
+> ![Projection](doc/Projection_invoice.png)
+
+- Investor in Event Store:
+> ![EventStore](doc/ES_investor.png)
+
+- Investor in Projection DB:
+> ![Projection](doc/Projection_investor.png)
 
 ## Code
 
