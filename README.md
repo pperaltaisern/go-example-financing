@@ -28,7 +28,7 @@ In the first, commands are sended to the Listener as a test input, and assertion
 
 For the query side, the input are domain events that are published in the event bus, assertions are done agains the result of grpc queries.
 
-![](doc/query test.jpg)
+![](doc/query_test.jpg)
 
 ## Acceptance criteria
 
