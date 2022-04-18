@@ -9,6 +9,27 @@ The domain used as example is responsible to register Issuers that can put Invoi
 ## Architecture
 ![](doc/architecture.jpg)
 
+### Design choices
+- An aggregate represents a transaction in the event store.
+- A handler can only mutate an aggregate at a time. This reduces the chances of optimistic concurrency conflicts and makes it easier to shard the application and event store by aggregate ID.
+- Processes that have to mutate multiple aggregates will span a [choreograhy based SAGA](https://microservices.io/patterns/data/saga.html).
+- Because of the SAGA, aggregates might need compensatory commands.
+- The "Grpc Commands Listener" component could be deployed int its own. Its only responsability is to validate commands formatting and enqueue them.
+- Having a queue for commands enables a retry mechanism and a buffer that protects the application from spikes. We lose the ability to inform the client about the errors of the domain (at least in a synchronous way).
+- Commands that create new aggregates are generating new IDs in the "Listener" and return them to the client, but commands might be discarded in the domain meaning that the aggregate won't be stored.
+- Events from the event store are collected by the "Relayer" component every 100ms and publishes them into the event bus. Events might be repeated but they are always in order.
+
+### Testing strategy
+Acceptance test are done against a running application that is waken up using docker-compose. The command side and the query side are being tested separately. 
+
+In the first, commands are sended to the Listener as a test input, and assertions are done reading from the event bus via a "test subscription", asserting that events published are those that the test expects (in order).
+
+![](doc/command_test.jpg)
+
+For the query side, the input are domain events that are published in the event bus, assertions are done agains the result of grpc queries.
+
+![](doc/query test.jpg)
+
 ## Acceptance criteria
 
 ## Demo
@@ -29,14 +50,8 @@ To put some visualization on the difference between the state of the "Event Stor
 - Investor in Projection DB:
 > ![Projection](doc/Projection_investor.png)
 
-## Code
-
-## Testing strategy
-
-## Considerations
 
 ## Dev
-
 Run:
 ```bash
 docker-compose up 
