@@ -31,6 +31,16 @@ For the query side, the input are domain events that are published in the event 
 ![](doc/query_test.jpg)
 
 ## Acceptance criteria
+Use cases are in event storming notation where:
+
+- ![#45BBFF](https://via.placeholder.com/15/45BBFF/000000?text=+) Command or use case.
+- ![#FFF942](https://via.placeholder.com/15/FFF942/000000?text=+) User triggering the command.
+- ![#FFA545](https://via.placeholder.com/15/FFA545/000000?text=+) Events raised as a result of the command's execution.
+- ![#C03BE3](https://via.placeholder.com/15/C03BE3/000000?text=+) Policies to take into consideration when processing the command.
+- ![#FED6F3](https://via.placeholder.com/15/FED6F3/000000?text=+) Event handling of raised events.
+- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) Read Models that must be updated asynchronously by raised events.
+
+![](doc/event_storming.jpg)
 
 ## Demo
 ![](doc/demo.gif)
